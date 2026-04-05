@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>PICK LC UIT TRACKER</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+table { border-collapse: collapse !important; font-family:Segoe UI; font-size:13px; }
+th, td { border:1px solid black !important; padding:4px !important; text-align:center; font-weight:bold; }
+th { background:#007acc;color:white; }
+h2,h3,h4 { color:#007acc; font-family:Segoe UI; font-weight:bold; }
+select { font-family:Segoe UI; }
+</style>
+</head>
+
+<body>
+
+<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f5f5f5;overflow:auto;z-index:9999;padding:10px;">
+
+    <div style="text-align:center;margin-bottom:10px;">
+        <h2>PICK LC UIT TRACKER</h2>
+
+        <input type="file" id="f1">
+        <input type="file" id="f2"><br><br>
+
+        <button id="process">Process</button>
+        <button id="downloadMerged">Download Merged Excel</button>
+        <button id="downloadTables">Download Table View</button>
+
+        <br><br>
+
+        <button id="quarterlyBtn">Quarterly</button>
+        <button id="hourlyBtn">Hourly</button>
+    </div>
+
+    <div id="out"></div>
+</div>
+
+<script>
+'use strict';
+
+let mergedData=[], lcSummary=[], topData=[];
+let currentMode="quarters";
+
+const remarksList=[
+"PACK TO PICK","Multiple times floor change","Multiple times barcode & missing issue",
+"Alexa calls not connected(busy), so came to pickdesk","Nonsort picker floor movment",
+"vrc issue","Health issue","Late reported to floor",
+"No carts available on floor, came back and taken at P1","Washroom",
+"Scanner issue","Picker mistake","Long distance bins",
+"QA/Hot pick-floor change","Hov picker-floor change"
+];
+
+// READ EXCEL
+function readExcel(file){
+    return new Promise(res=>{
+        const r=new FileReader();
+        r.onload=e=>{
+            const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+            res(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]));
+        };
+        r.readAsArrayBuffer(file);
+    });
+}
+
+function clean(s){return String(s||"").toLowerCase().replace(/[^a-z]/g,'');}
+function findCol(o,k){return Object.keys(o).find(c=>k.some(w=>clean(c).includes(w)));}
+
+function merge(emp,loginMap,lcMap){
+    const n=findCol(emp[0],["name"]);
+    const t=findCol(emp[0],["total"]);
+    const i=findCol(emp[0],["infer"]);
+    const u=findCol(emp[0],["uph"]);
+    const q=findCol(emp[0],["quantity"]);
+
+    return emp.map(r=>({
+        name:r[n],
+        login:loginMap[clean(r[n])]||"",
+        total:+r[t]||0,
+        inferred:+r[i]||0,
+        uph:+r[u]||0,
+        quantity:r[q]||"",
+        lc:lcMap[clean(r[n])]||"L1"
+    }));
+}
+
+function f(n){return (+n).toFixed(2);}
+
+// LC SPLIT
+function calculateLC(d){
+    let m={L1:{t:0,i:0,c:0},L2:{t:0,i:0,c:0},L3:{t:0,i:0,c:0},L4:{t:0,i:0,c:0},L5:{t:0,i:0,c:0}};
+    d.forEach(r=>{
+        if(m[r.lc]){
+            m[r.lc].t+=r.total;
+            m[r.lc].i+=r.inferred;
+            m[r.lc].c++;
+        }
+    });
+
+    return Object.keys(m).map(k=>{
+        let x=m[k];
+        return{
+            LC:k,
+            Total:f(x.t),
+            Inferred:f(x.i),
+            UIT:f(x.t?(x.i/x.t)*100:0),
+            Employees:x.c
+        };
+    });
+}
+
+// TOP DEFAULTERS
+function getTop(d){
+    return d.map(r=>({...r,uit:r.total?(r.inferred/r.total)*100:0}))
+        .sort((a,b)=>b.uit-a.uit)
+        .slice(0,20);
+}
+
+// UIT TABLE
+function createUIT(title,mode){
+    let headers = mode==="hours" ? Array.from({length:10},(_,i)=>"HOUR"+(i+1)) : ["Q1","Q2","Q3"];
+
+    return `
+    <div style="width:60%;margin:20px auto;">
+    <h4 style="text-align:center;">${title}</h4>
+    <table class="uitTable" data-title="${title}" style="width:auto;margin:auto;font-size:12px;">
+    <tr>
+    <th>UIT</th>${headers.map(h=>`<th>${h}</th>`).join("")}<th>Total</th></tr>
+
+    <tr><td>Total</td>${headers.map(()=>`<td contenteditable></td>`).join("")}<td></td></tr>
+    <tr><td>Inferred</td>${headers.map(()=>`<td contenteditable></td>`).join("")}<td></td></tr>
+    <tr><td>UIT%</td>${headers.map(()=>`<td></td>`).join("")}<td></td></tr>
+
+    </table>
+    </div>`;
+}
+
+// BUTTONS
+document.getElementById("quarterlyBtn").onclick=()=>{currentMode="quarters";render();};
+document.getElementById("hourlyBtn").onclick=()=>{currentMode="hours";render();};
+
+// AUTO CALC
+document.addEventListener("input",()=>{
+    document.querySelectorAll(".uitTable").forEach(t=>{
+        let r=t.querySelectorAll("tr");
+        let a=r[1].querySelectorAll("td");
+        let b=r[2].querySelectorAll("td");
+        let u=r[3].querySelectorAll("td");
+
+        let ts=0,is=0;
+
+        for(let i=1;i<a.length-1;i++){
+            let x=+a[i].innerText||0;
+            let y=+b[i].innerText||0;
+
+            ts+=x; 
+            is+=y;
+
+            u[i].innerText=x?((y/x)*100).toFixed(2):"";
+        }
+
+        a[a.length-1].innerText=ts.toFixed(2);
+        b[b.length-1].innerText=is.toFixed(2);
+        u[u.length-1].innerText=(ts?((is/ts)*100):0).toFixed(2);
+    });
+});
+
+// PROCESS
+document.getElementById("process").onclick=async()=>{
+    const f1=document.getElementById("f1").files[0];
+    const f2=document.getElementById("f2").files[0];
+
+    if(!f1||!f2) return alert("Upload both files");
+
+    const emp=await readExcel(f1);
+    const lc=await readExcel(f2);
+
+    let loginMap={}, lcMap={};
+
+    const n2=findCol(lc[0],["name"]);
+    const l2=findCol(lc[0],["login"]);
+    const lcCol=findCol(lc[0],["lc"]);
+
+    lc.forEach(r=>{
+        loginMap[clean(r[n2])]=r[l2];
+        lcMap[clean(r[n2])]=r[lcCol];
+    });
+
+    mergedData=merge(emp,loginMap,lcMap);
+    lcSummary=calculateLC(mergedData);
+    topData=getTop(mergedData);
+
+    render();
+};
+
+// DOWNLOAD MERGED
+document.getElementById("downloadMerged").onclick=()=>{
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(mergedData),"Merged Data");
+    XLSX.writeFile(wb,"Merged_Data.xlsx");
+};
+
+// DOWNLOAD TABLES
+document.getElementById("downloadTables").onclick=()=>{
+    const wb=XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(lcSummary),"LC Split");
+
+    XLSX.writeFile(wb,"UIT_Tables.xlsx");
+};
+
+// RENDER
+function render(){
+    let html="";
+
+    html+=`<h3 style="text-align:center;">LC SPLIT</h3>
+    <table style="width:40%;margin:auto;">
+    <tr><th>LC</th><th>Total</th><th>Inferred</th><th>UIT%</th><th>Pickers</th></tr>`;
+
+    lcSummary.forEach(r=>{
+        html+=`<tr>
+        <td>${r.LC}</td>
+        <td>${r.Total}</td>
+        <td>${r.Inferred}</td>
+        <td>${r.UIT}</td>
+        <td>${r.Employees}</td>
+        </tr>`;
+    });
+
+    html+=`</table><br>`;
+
+    html+=`<h3 style="text-align:center;">TOP UIT DEFAULTERS</h3>
+    <table id="def" style="width:95%;margin:auto;">
+    <tr>
+    <th>Name</th><th>Login</th><th>LC</th><th>Total</th><th>Inferred</th><th>UIT%</th><th>UPH</th><th>Quantity</th>
+    <th>Remarks</th><th>Coaching</th></tr>`;
+
+    topData.forEach(r=>{
+        html+=`<tr>
+        <td>${r.name}</td>
+        <td>${r.login}</td>
+        <td>${r.lc}</td>
+        <td>${f(r.total)}</td>
+        <td>${f(r.inferred)}</td>
+        <td>${f(r.uit)}</td>
+        <td>${f(r.uph)}</td>
+        <td>${r.quantity}</td>
+        <td><select><option></option>${remarksList.map(x=>`<option>${x}</option>`).join("")}</select></td>
+        <td><select><option></option><option>Coaching done</option><option>GCA punched</option></select></td>
+        </tr>`;
+    });
+
+    html+=`</table><br>`;
+
+    ["PICK UIT","TRANS UIT","V-RET UIT"].forEach(flow=>{
+        html+=createUIT(flow,currentMode);
+    });
+
+    document.getElementById("out").innerHTML=html;
+}
+</script>
+
+</body>
+  </html>
