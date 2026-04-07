@@ -1,50 +1,131 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>PICK LC UIT TRACKER</title>
 
+<!-- XLSX Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-table { border-collapse: collapse !important; font-family:Segoe UI; font-size:13px; }
-th, td { border:1px solid black !important; padding:4px !important; text-align:center; font-weight:bold; }
-th { background:#007acc;color:white; }
-h2,h3,h4 { color:#007acc; font-family:Segoe UI; font-weight:bold; }
-select { font-family:Segoe UI; }
+body{
+font-family:Segoe UI;
+margin:0;
+padding:10px;
+background:#f5f7fa;
+}
+
+h1{
+text-align:center;
+font-size:42px;
+font-weight:900;
+}
+
+.center{
+text-align:center;
+margin-bottom:10px;
+}
+
+.btn{
+padding:12px 22px;
+margin:5px;
+border:none;
+color:white;
+font-size:16px;
+font-weight:bold;
+border-radius:8px;
+cursor:pointer;
+transition:0.3s;
+}
+
+.btn:hover{
+transform:translateY(-2px);
+}
+
+.green{background:#2ecc71;}
+.blue{background:#3498db;}
+
+table{
+border-collapse:collapse;
+width:95%;
+margin:20px auto;
+background:white;
+}
+
+th,td{
+border:2px solid black;
+padding:8px;
+text-align:center;
+font-weight:bold;
+}
+
+th{
+background:#0b5394;
+color:white;
+}
+
+h3{
+text-align:center;
+font-size:28px;
+font-weight:900;
+}
+
+.modeBtn{
+padding:10px 18px;
+margin:10px;
+border:none;
+color:white;
+font-weight:bold;
+border-radius:6px;
+cursor:pointer;
+}
+
+#qBtn{background:#27ae60;}
+#hBtn{background:#2980b9;}
+
+.remarkCell{
+min-width:350px;
+}
+
+.grandRow{
+background:#cfe2ff !important;
+font-weight:900;
+}
 </style>
 </head>
 
 <body>
 
-<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:#f5f5f5;overflow:auto;z-index:9999;padding:10px;">
+<h1>PICK LC UIT TRACKER</h1>
 
-    <div style="text-align:center;margin-bottom:10px;">
-        <h2>PICK LC UIT TRACKER</h2>
+<div class="center">
+<input type="file" id="f1">
+<input type="file" id="f2"><br><br>
 
-        <input type="file" id="f1">
-        <input type="file" id="f2"><br><br>
-
-        <button id="process">Process</button>
-        <button id="downloadMerged">Download Merged Excel</button>
-        <button id="downloadTables">Download Table View</button>
-
-        <br><br>
-
-        <button id="quarterlyBtn">Quarterly</button>
-        <button id="hourlyBtn">Hourly</button>
-    </div>
-
-    <div id="out"></div>
+<button class="btn green" id="process">Process</button>
+<button class="btn blue" id="mergeBtn">Merge Excel</button>
+<button class="btn blue" id="tableBtn">Download Tables</button>
 </div>
 
+<div id="out"></div>
+
+<!-- YOUR SCRIPT GOES HERE -->
 <script>
+(function () {
 'use strict';
 
-let mergedData=[], lcSummary=[], topData=[];
-let currentMode="quarters";
+// Load XLSX
+const s = document.createElement('script');
+s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+document.head.appendChild(s);
+s.onload = init;
 
-const remarksList=[
+function init(){
+
+let mergedData=[],lcSummary=[],topData=[];
+let mode = localStorage.getItem("mode") || "quarters";
+
+const remarksList = [
 "PACK TO PICK","Multiple times floor change","Multiple times barcode & missing issue",
 "Alexa calls not connected(busy), so came to pickdesk","Nonsort picker floor movment",
 "vrc issue","Health issue","Late reported to floor",
@@ -53,214 +134,300 @@ const remarksList=[
 "QA/Hot pick-floor change","Hov picker-floor change"
 ];
 
-// READ EXCEL
+// UI
+document.body.innerHTML = `
+<div style="font-family:Segoe UI;padding:10px;">
+<h1 style="text-align:center;font-size:42px;font-weight:900;">PICK LC UIT TRACKER</h1>
+
+<div style="text-align:center;">
+<input type="file" id="f1">
+<input type="file" id="f2"><br><br>
+
+<button class="btn green" id="process">Process</button>
+<button class="btn blue" id="mergeBtn">Merge Excel</button>
+<button class="btn blue" id="tableBtn">Download Tables</button>
+</div>
+
+<div id="out"></div>
+</div>
+`;
+
+// STYLE
+const st=document.createElement("style");
+st.innerHTML=`
+table{border-collapse:collapse;width:95%;margin:20px auto;}
+th,td{border:2px solid black;padding:8px;text-align:center;font-weight:bold;}
+th{background:#0b5394;color:white;}
+
+h3{text-align:center;font-size:28px;font-weight:900;}
+
+.btn{
+padding:12px 22px;margin:5px;border:none;color:white;
+font-size:16px;font-weight:bold;border-radius:8px;
+cursor:pointer;transition:0.3s;
+}
+.btn:hover{transform:translateY(-2px);}
+.green{background:#2ecc71;}
+.blue{background:#3498db;}
+
+.modeBtn{
+padding:10px 18px;margin:10px;border:none;color:white;
+font-weight:bold;border-radius:6px;cursor:pointer;
+}
+#qBtn{background:#27ae60;}
+#hBtn{background:#2980b9;}
+
+.remarkCell{min-width:350px;}
+.grandRow{background:#cfe2ff !important;font-weight:900;}
+`;
+document.head.appendChild(st);
+
+// HELPERS
 function readExcel(file){
-    return new Promise(res=>{
-        const r=new FileReader();
-        r.onload=e=>{
-            const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
-            res(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]));
-        };
-        r.readAsArrayBuffer(file);
-    });
-}
-
-function clean(s){return String(s||"").toLowerCase().replace(/[^a-z]/g,'');}
-function findCol(o,k){return Object.keys(o).find(c=>k.some(w=>clean(c).includes(w)));}
-
-function merge(emp,loginMap,lcMap){
-    const n=findCol(emp[0],["name"]);
-    const t=findCol(emp[0],["total"]);
-    const i=findCol(emp[0],["infer"]);
-    const u=findCol(emp[0],["uph"]);
-    const q=findCol(emp[0],["quantity"]);
-
-    return emp.map(r=>({
-        name:r[n],
-        login:loginMap[clean(r[n])]||"",
-        total:+r[t]||0,
-        inferred:+r[i]||0,
-        uph:+r[u]||0,
-        quantity:r[q]||"",
-        lc:lcMap[clean(r[n])]||"L1"
-    }));
-}
-
-function f(n){return (+n).toFixed(2);}
-
-// LC SPLIT
-function calculateLC(d){
-    let m={L1:{t:0,i:0,c:0},L2:{t:0,i:0,c:0},L3:{t:0,i:0,c:0},L4:{t:0,i:0,c:0},L5:{t:0,i:0,c:0}};
-    d.forEach(r=>{
-        if(m[r.lc]){
-            m[r.lc].t+=r.total;
-            m[r.lc].i+=r.inferred;
-            m[r.lc].c++;
-        }
-    });
-
-    return Object.keys(m).map(k=>{
-        let x=m[k];
-        return{
-            LC:k,
-            Total:f(x.t),
-            Inferred:f(x.i),
-            UIT:f(x.t?(x.i/x.t)*100:0),
-            Employees:x.c
-        };
-    });
-}
-
-// TOP DEFAULTERS
-function getTop(d){
-    return d.map(r=>({...r,uit:r.total?(r.inferred/r.total)*100:0}))
-        .sort((a,b)=>b.uit-a.uit)
-        .slice(0,20);
-}
-
-// UIT TABLE
-function createUIT(title,mode){
-    let headers = mode==="hours" ? Array.from({length:10},(_,i)=>"HOUR"+(i+1)) : ["Q1","Q2","Q3"];
-
-    return `
-    <div style="width:60%;margin:20px auto;">
-    <h4 style="text-align:center;">${title}</h4>
-    <table class="uitTable" data-title="${title}" style="width:auto;margin:auto;font-size:12px;">
-    <tr>
-    <th>UIT</th>${headers.map(h=>`<th>${h}</th>`).join("")}<th>Total</th></tr>
-
-    <tr><td>Total</td>${headers.map(()=>`<td contenteditable></td>`).join("")}<td></td></tr>
-    <tr><td>Inferred</td>${headers.map(()=>`<td contenteditable></td>`).join("")}<td></td></tr>
-    <tr><td>UIT%</td>${headers.map(()=>`<td></td>`).join("")}<td></td></tr>
-
-    </table>
-    </div>`;
-}
-
-// BUTTONS
-document.getElementById("quarterlyBtn").onclick=()=>{currentMode="quarters";render();};
-document.getElementById("hourlyBtn").onclick=()=>{currentMode="hours";render();};
-
-// AUTO CALC
-document.addEventListener("input",()=>{
-    document.querySelectorAll(".uitTable").forEach(t=>{
-        let r=t.querySelectorAll("tr");
-        let a=r[1].querySelectorAll("td");
-        let b=r[2].querySelectorAll("td");
-        let u=r[3].querySelectorAll("td");
-
-        let ts=0,is=0;
-
-        for(let i=1;i<a.length-1;i++){
-            let x=+a[i].innerText||0;
-            let y=+b[i].innerText||0;
-
-            ts+=x; 
-            is+=y;
-
-            u[i].innerText=x?((y/x)*100).toFixed(2):"";
-        }
-
-        a[a.length-1].innerText=ts.toFixed(2);
-        b[b.length-1].innerText=is.toFixed(2);
-        u[u.length-1].innerText=(ts?((is/ts)*100):0).toFixed(2);
-    });
+return new Promise(res=>{
+let r=new FileReader();
+r.onload=e=>{
+let wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+res(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]));
+};
+r.readAsArrayBuffer(file);
 });
+}
+
+function clean(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]/g,'');}
+function findCol(o,k){
+let c=Object.keys(o||{});
+for(let x of k){
+let f=c.find(a=>a.toLowerCase().includes(x));
+if(f) return f;
+}
+return c[0];
+}
+function f(n){return (+n||0).toFixed(2);}
 
 // PROCESS
 document.getElementById("process").onclick=async()=>{
-    const f1=document.getElementById("f1").files[0];
-    const f2=document.getElementById("f2").files[0];
+try{
+let f1=document.getElementById("f1").files[0];
+let f2=document.getElementById("f2").files[0];
 
-    if(!f1||!f2) return alert("Upload both files");
+if(!f1 || !f2) return alert("Upload both files");
 
-    const emp=await readExcel(f1);
-    const lc=await readExcel(f2);
+let emp=await readExcel(f1);
+let lc=await readExcel(f2);
 
-    let loginMap={}, lcMap={};
+let loginMap={},lcMap={};
 
-    const n2=findCol(lc[0],["name"]);
-    const l2=findCol(lc[0],["login"]);
-    const lcCol=findCol(lc[0],["lc"]);
+const nameLC=findCol(lc[0],["name"]);
+const loginLC=findCol(lc[0],["login_name"]);
+const lcCol=findCol(lc[0],["lc"]);
 
-    lc.forEach(r=>{
-        loginMap[clean(r[n2])]=r[l2];
-        lcMap[clean(r[n2])]=r[lcCol];
-    });
+lc.forEach(r=>{
+let key=clean(r[nameLC]);
+loginMap[key]=r[loginLC];
+lcMap[key]=r[lcCol];
+});
 
-    mergedData=merge(emp,loginMap,lcMap);
-    lcSummary=calculateLC(mergedData);
-    topData=getTop(mergedData);
+const nameCol=findCol(emp[0],["name"]);
+const totalCol=findCol(emp[0],["total"]);
+const inferCol=findCol(emp[0],["infer"]);
+const uphCol=findCol(emp[0],["uph"]);
+const qtyCol=findCol(emp[0],["quantity"]);
 
-    render();
+mergedData=emp.map(r=>{
+let key=clean(r[nameCol]);
+return {
+name:r[nameCol],
+login:loginMap[key]||"",
+total:+r[totalCol]||0,
+inferred:+r[inferCol]||0,
+uph:+r[uphCol]||0,
+quantity:r[qtyCol]||"",
+lc:lcMap[key]||"L1"
 };
+});
 
-// DOWNLOAD MERGED
-document.getElementById("downloadMerged").onclick=()=>{
-    const wb=XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(mergedData),"Merged Data");
-    XLSX.writeFile(wb,"Merged_Data.xlsx");
-};
+calcLC();
+calcTop();
+render();
 
-// DOWNLOAD TABLES
-document.getElementById("downloadTables").onclick=()=>{
-    const wb=XLSX.utils.book_new();
-
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(lcSummary),"LC Split");
-
-    XLSX.writeFile(wb,"UIT_Tables.xlsx");
-};
-
-// RENDER
-function render(){
-    let html="";
-
-    html+=`<h3 style="text-align:center;">LC SPLIT</h3>
-    <table style="width:40%;margin:auto;">
-    <tr><th>LC</th><th>Total</th><th>Inferred</th><th>UIT%</th><th>Pickers</th></tr>`;
-
-    lcSummary.forEach(r=>{
-        html+=`<tr>
-        <td>${r.LC}</td>
-        <td>${r.Total}</td>
-        <td>${r.Inferred}</td>
-        <td>${r.UIT}</td>
-        <td>${r.Employees}</td>
-        </tr>`;
-    });
-
-    html+=`</table><br>`;
-
-    html+=`<h3 style="text-align:center;">TOP UIT DEFAULTERS</h3>
-    <table id="def" style="width:95%;margin:auto;">
-    <tr>
-    <th>Name</th><th>Login</th><th>LC</th><th>Total</th><th>Inferred</th><th>UIT%</th><th>UPH</th><th>Quantity</th>
-    <th>Remarks</th><th>Coaching</th></tr>`;
-
-    topData.forEach(r=>{
-        html+=`<tr>
-        <td>${r.name}</td>
-        <td>${r.login}</td>
-        <td>${r.lc}</td>
-        <td>${f(r.total)}</td>
-        <td>${f(r.inferred)}</td>
-        <td>${f(r.uit)}</td>
-        <td>${f(r.uph)}</td>
-        <td>${r.quantity}</td>
-        <td><select><option></option>${remarksList.map(x=>`<option>${x}</option>`).join("")}</select></td>
-        <td><select><option></option><option>Coaching done</option><option>GCA punched</option></select></td>
-        </tr>`;
-    });
-
-    html+=`</table><br>`;
-
-    ["PICK UIT","TRANS UIT","V-RET UIT"].forEach(flow=>{
-        html+=createUIT(flow,currentMode);
-    });
-
-    document.getElementById("out").innerHTML=html;
+}catch(e){
+alert("Error: "+e.message);
 }
+};
+
+// MERGE (FIXED)
+document.getElementById("mergeBtn").onclick=()=>{
+if(!mergedData.length) return alert("Process first");
+let ws=XLSX.utils.json_to_sheet(mergedData);
+let wb=XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb,ws,"Merged");
+XLSX.writeFile(wb,"Merged.xlsx");
+};
+
+// DOWNLOAD (FIXED SAFE)
+document.getElementById("tableBtn").onclick=()=>{
+if(!mergedData.length) return alert("Process first");
+
+let data=[];
+
+data.push(["LC SPLIT"]);
+lcSummary.forEach(r=>data.push(Object.values(r)));
+
+data.push([]);
+data.push(["TOP DEFAULTERS"]);
+topData.forEach(r=>{
+data.push([r.name,r.login,r.lc,f(r.total),f(r.inferred)]);
+});
+
+let ws=XLSX.utils.aoa_to_sheet(data);
+let wb=XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb,ws,"REPORT");
+XLSX.writeFile(wb,"REPORT.xlsx");
+};
+
+// LC
+function calcLC(){
+let m={},gt=0,gi=0,gc=0;
+
+mergedData.forEach(r=>{
+if(!m[r.lc]) m[r.lc]={t:0,i:0,c:0};
+m[r.lc].t+=r.total;
+m[r.lc].i+=r.inferred;
+m[r.lc].c++;
+gt+=r.total; gi+=r.inferred; gc++;
+});
+
+lcSummary=Object.keys(m).map(k=>{
+let x=m[k];
+return {LC:k,Total:f(x.t),Inferred:f(x.i),UIT:f((x.i/x.t)*100||0)+"%",Employees:x.c};
+});
+
+lcSummary.push({LC:"GRAND TOTAL",Total:f(gt),Inferred:f(gi),UIT:f((gi/gt)*100||0)+"%",Employees:gc});
+}
+
+// TOP
+function calcTop(){
+topData=mergedData.map(r=>({...r,uit:r.total?(r.inferred/r.total)*100:0}))
+.sort((a,b)=>b.uit-a.uit).slice(0,20);
+}
+
+// RENDER (SAFE)
+function render(){
+
+let html=`<h3>LC SPLIT</h3><table>
+<tr><th>LC</th><th>Total</th><th>Inferred</th><th>UIT%</th><th>Pickers</th></tr>`;
+
+lcSummary.forEach(r=>{
+let cls=r.LC==="GRAND TOTAL"?"class='grandRow'":"";
+html+=`<tr ${cls}><td>${r.LC}</td><td>${r.Total}</td><td>${r.Inferred}</td><td>${r.UIT}</td><td>${r.Employees}</td></tr>`;
+});
+
+html+=`</table>`;
+
+html+=`<h3>TOP UIT DEFAULTERS</h3><table>
+<tr>
+<th>Name</th><th>Login</th><th>LC</th>
+<th>Total</th><th>Inferred</th><th>UIT%</th>
+<th>UPH</th><th>Qty</th>
+<th>Remarks</th><th>Coaching</th>
+</tr>`;
+
+topData.forEach(r=>{
+html+=`<tr>
+<td>${r.name}</td>
+<td>${r.login}</td>
+<td>${r.lc}</td>
+<td>${f(r.total)}</td>
+<td>${f(r.inferred)}</td>
+<td>${f(r.uit)}%</td>
+<td>${f(r.uph)}</td>
+<td>${r.quantity}</td>
+
+<td class="remarkCell">
+<select onchange="this.title=this.value">
+<option></option>
+${remarksList.map(x=>`<option>${x}</option>`).join("")}
+</select>
+</td>
+
+<td>
+<select>
+<option></option>
+<option>Coaching done</option>
+<option>GCA punched</option>
+</select>
+</td>
+</tr>`;
+});
+
+html+=`</table>`;
+
+// MODE BUTTONS FIX
+html+=`
+<div style="text-align:center;">
+<button class="modeBtn" id="qBtn">Quarters</button>
+<button class="modeBtn" id="hBtn">Hours</button>
+</div>
+`;
+
+html+=createUIT("PICK UIT")+createUIT("TRANS UIT")+createUIT("V-RET UIT");
+
+document.getElementById("out").innerHTML=html;
+
+// SAFE REBIND
+document.getElementById("qBtn").onclick=()=>{mode="quarters";render();}
+document.getElementById("hBtn").onclick=()=>{mode="hours";render();}
+
+setTimeout(attachCalc,100);
+}
+
+// UIT
+function createUIT(title){
+let headers=mode==="hours"
+?Array.from({length:10},(_,i)=>"Hour "+(i+1))
+:["Q1","Q2","Q3"];
+
+return `
+<h3>${title}</h3>
+<table class="uitTable">
+<tr><th>UITs</th>${headers.map(h=>`<th>${h}</th>`).join("")}<th>Total</th></tr>
+<tr><td>Total</td>${headers.map(()=>`<td contenteditable></td>`).join("")}<td></td></tr>
+<tr><td>Inferred</td>${headers.map(()=>`<td contenteditable></td>`).join("")}<td></td></tr>
+<tr><td>UIT%</td>${headers.map(()=>`<td></td>`).join("")}<td></td></tr>
+</table>`;
+}
+
+// CALC
+function attachCalc(){
+document.querySelectorAll(".uitTable").forEach(t=>{
+let total=t.rows[1].cells;
+let infer=t.rows[2].cells;
+let uit=t.rows[3].cells;
+
+for(let i=1;i<total.length-1;i++){
+total[i].oninput=infer[i].oninput=()=>{
+let ts=0,is=0;
+for(let j=1;j<total.length-1;j++){
+let a=parseFloat(total[j].innerText)||0;
+let b=parseFloat(infer[j].innerText)||0;
+ts+=a; is+=b;
+uit[j].innerText=a?f((b/a)*100)+"%":"";
+}
+total[total.length-1].innerText=f(ts);
+infer[infer.length-1].innerText=f(is);
+uit[uit.length-1].innerText=ts?f((is/ts)*100)+"%":"";
+};
+}
+});
+}
+
+}
+
+})();
+                          
+
 </script>
 
 </body>
-  </html>
+</html>
