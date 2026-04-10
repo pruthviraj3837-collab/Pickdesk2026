@@ -24,6 +24,11 @@ font-size:16px;
 }
 
 h1{margin-bottom:20px;}
+h2{
+text-align:center;
+font-weight:bold;
+margin-top:20px;
+  }
 
 table{
 border-collapse:collapse;
@@ -32,9 +37,10 @@ width:90%;
 font-size:13px;
 }
 th{
-background:#2ecc71;
-color:#000;
+background:#0b5394;
+color:#fff;
 padding:6px;
+font-weight:bold;
 }
 td{
 border:1px solid #ccc;
@@ -117,16 +123,71 @@ show(`
 // ---------- LINKS ----------
 function links(){
 show(`
+function links(){
+
+const linksData = [
+
+{ name:"RODEO CPT", url:"https://rodeo-dub.amazon.com/HYD8/ExSD?yAxis=PROCESS_PATH" },
+{ name:"DWELL", url:"https://rodeo-dub.amazon.com/HYD8/Dwell" },
+{ name:"TRANS", url:"https://rodeo-dub.amazon.com/HYD8/ExSD?shipmentTypes=TRANSSHIPMENTS" },
+{ name:"FRACS", url:"https://rodeo-dub.amazon.com/HYD8/ExSD?fracs=FRACS" },
+{ name:"CHARGE", url:"https://rodeo-dub.amazon.com/HYD8/Charge" },
+{ name:"WIP", url:"https://rodeo-dub.amazon.com/HYD8/ExSD?yAxis=WORK_POOL" },
+
+{ name:"STROM", url:"https://us-east-1.quicksight.aws.amazon.com" },
+{ name:"SORTATION", url:"https://flow-sortation-eu.amazon.com/HYD8" },
+{ name:"LnD Dashboard", url:"https://us-east-1.quicksight.aws.amazon.com" },
+{ name:"PICK ELIGIBILITY", url:"https://fc-eligibility-website-dub.aka.amazon.com" },
+{ name:"LEDGER", url:"https://ledger-eu.qubit.a2z.com" },
+{ name:"MSMB Batches", url:"https://picking-console.eu.picking.aft.a2z.com" },
+{ name:"PICK BACKLOG", url:"https://autoflow-visualizer-eu.amazon.com" },
+{ name:"PICK WORKFORCE", url:"https://picking-console.eu.picking.aft.a2z.com" },
+{ name:"PICK AVG BATCHES", url:"https://us-east-1.quicksight.aws.amazon.com" },
+{ name:"AUTO FLOW", url:"https://autoflow-cascade-eu.amazon.com" },
+{ name:"SERA", url:"https://sera-eu.aka.amazon.com" },
+{ name:"ATROPS", url:"https://atrops-web-eu.amazon.com" },
+
+{ name:"BARCODE GENERATOR", url:"https://prod.barcodes.robotics.amazon.dev" },
+{ name:"TEXT APPLICATION", url:"https://apps.microsoft.com" },
+{ name:"FC QUALITY", url:"https://fcquality.amazon.com" },
+{ name:"EMAIL SUBSCRIPTION", url:"https://email-list.corp.amazon.com" },
+{ name:"ATLAS", url:"https://atlas.qubit.amazon.dev" },
+{ name:"FANS", url:"https://fans-dub.amazon.com" },
+{ name:"PICK ANDONS", url:"https://fc-andons-eu.corp.amazon.com" },
+{ name:"TT", url:"https://amazonots.service-now.com" },
+{ name:"CPT RISK MANAGEMENT", url:"https://outboundflow-dub.amazon.com" },
+{ name:"RIPPLE", url:"https://ripple.in-analytics.fc.amazon.dev" },
+{ name:"PRO LOG", url:"https://us-east-1.quicksight.aws.amazon.com" },
+{ name:"BMI", url:"https://bmi.amazon.com" },
+{ name:"SHIPMENT", url:"https://fexinspector-eu.corp.amazon.com" },
+{ name:"SAFETY TT", url:"https://t.corp.amazon.com" }
+
+];
+
+let html = `
 <div class="page white">
 <h1>PICK LINKS</h1>
 
-<button class="btn" onclick="openLink('https://google.com')">Example Link 1</button>
-<button class="btn" onclick="openLink('https://amazon.com')">Example Link 2</button>
+<div style="display:flex;flex-wrap:wrap;justify-content:center;height:70vh;overflow:auto;">
+`;
+
+linksData.forEach(l=>{
+html += `
+<button class="btn" style="width:260px;margin:8px;"
+onclick="openLink('${l.url}')">
+${l.name}
+</button>`;
+});
+
+html += `
+</div>
 
 <button class="btn" onclick="pickTools()">⬅ BACK</button>
 </div>
-`);
-}
+`;
+
+show(html);
+  }
 function openLink(url){window.open(url,"_blank");}
 
 // ---------- TRACKER UI ----------
@@ -139,6 +200,7 @@ show(`
 <input type="file" id="f2"><br>
 <button class="btn" onclick="process()">PROCESS</button>
 
+<button class="btn" onclick="downloadExcel()">DOWNLOAD EXCEL</button>
 <div>
 <button class="btn" onclick="mode='hours';render()">HOURS</button>
 <button class="btn" onclick="mode='quarters';render()">QUARTERS</button>
@@ -150,6 +212,86 @@ show(`
 </div>
 `);
 }
+  function downloadExcel(){
+
+let wb = XLSX.utils.book_new();
+let ws_data = [];
+
+// ---------- LC SPLIT ----------
+ws_data.push(["LC SPLIT"]);
+ws_data.push(["LC","Total","Infer","UIT%"]);
+
+let lcs=["L1","L2","L3","L4","L5"];
+let gt=0,gi=0;
+
+lcs.forEach(l=>{
+let f=data.filter(x=>x.lc===l);
+let t=f.reduce((a,b)=>a+b.total,0);
+let i=f.reduce((a,b)=>a+b.infer,0);
+
+gt+=t; gi+=i;
+
+ws_data.push([
+l,
+t.toFixed(2),
+i.toFixed(2),
+t?((i/t)*100).toFixed(2)+"%":"0%"
+]);
+});
+
+ws_data.push([
+"TOTAL",
+gt.toFixed(2),
+gi.toFixed(2),
+gt?((gi/gt)*100).toFixed(2)+"%":"0%"
+]);
+
+ws_data.push([]);
+
+// ---------- TOP DEFAULTERS ----------
+ws_data.push(["TOP UIT DEFAULTERS"]);
+ws_data.push(["Name","Login","LC","Infer","Total","UIT%","Comments","Coaching"]);
+
+document.querySelectorAll("table")[1].querySelectorAll("tr").forEach((tr,i)=>{
+if(i===0) return;
+
+let row=[];
+tr.querySelectorAll("td").forEach(td=>{
+row.push(td.innerText);
+});
+
+ws_data.push(row);
+});
+
+ws_data.push([]);
+
+// ---------- UIT TABLES ----------
+document.querySelectorAll(".uit").forEach((table,index)=>{
+
+let titles=["PICK UIT","TRANS UIT","V-RET UIT"];
+
+ws_data.push([titles[index]]);
+
+table.querySelectorAll("tr").forEach(tr=>{
+let row=[];
+tr.querySelectorAll("th,td").forEach(cell=>{
+row.push(cell.innerText);
+});
+ws_data.push(row);
+});
+
+ws_data.push([]);
+
+});
+
+// ---------- CREATE SHEET ----------
+let ws = XLSX.utils.aoa_to_sheet(ws_data);
+XLSX.utils.book_append_sheet(wb, ws, "UIT REPORT");
+
+// ---------- DOWNLOAD ----------
+XLSX.writeFile(wb, "UIT_Report.xlsx");
+
+  }
 
 function pickTracker(){trackerUI("PICK");}
 function packTracker(){trackerUI("PACK");}
@@ -259,17 +401,42 @@ calcUIT();
 }
 
 // ---------- UIT ----------
-function uitTable(){
-let cols=mode==="hours"
-?Array.from({length:10},(_,i)=>"H"+(i+1))
-:["Q1","Q2","Q3"];
+function uitTable(title){
 
-return `<h2>UIT</h2><table class="uit">
-<tr><th></th>${cols.map(c=>`<th>${c}</th>`)}<th>Total</th></tr>
-<tr><td>Total</td>${cols.map(()=>`<td contenteditable></td>`)}<td></td></tr>
-<tr><td>Infer</td>${cols.map(()=>`<td contenteditable></td>`)}<td></td></tr>
-<tr><td>UIT%</td>${cols.map(()=>`<td></td>`)}<td></td></tr>
-</table>`;
+let cols = mode==="hours"
+? Array.from({length:10},(_,i)=>"HOUR"+(i+1))
+: ["Q1","Q2","Q3"];
+
+return `
+<h2>${title}</h2>
+<table class="uit">
+
+<tr>
+<th>Type</th>
+${cols.map(c=>`<th>${c}</th>`).join("")}
+<th>Total</th>
+</tr>
+
+<tr>
+<td>Total</td>
+${cols.map(()=>`<td contenteditable></td>`).join("")}
+<td></td>
+</tr>
+
+<tr>
+<td>Infer</td>
+${cols.map(()=>`<td contenteditable></td>`).join("")}
+<td></td>
+</tr>
+
+<tr>
+<td>UIT%</td>
+${cols.map(()=>`<td></td>`).join("")}
+<td></td>
+</tr>
+
+</table>
+`;
 }
 
 function calcUIT(){
