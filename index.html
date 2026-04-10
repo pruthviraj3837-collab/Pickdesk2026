@@ -24,7 +24,6 @@ font-size:16px;
 }
 
 h1{margin-bottom:20px;}
-h2{text-align:center;font-weight:bold;margin-top:20px;}
 
 table{
 border-collapse:collapse;
@@ -33,49 +32,45 @@ width:90%;
 font-size:13px;
 }
 th{
-background:#0b5394;
-color:#fff;
+background:#2ecc71;
+color:#000;
 padding:6px;
-font-weight:bold;
 }
 td{
-border:1px solid #999;
-padding:6px;
+border:1px solid #ccc;
+padding:5px;
 text-align:center;
-vertical-align:top;
 }
 tr:nth-child(even){background:#f9f9f9;}
-.grand{background:#cfe2ff;font-weight:bold;}
+.grand{background:#c6efce;font-weight:bold;}
 
-.commentBox{
-min-width:300px;
-white-space:pre-wrap;
-word-break:break-word;
-text-align:left;
-background:#fff8dc;
-}
+input,select{padding:6px;margin:5px;}
+td[contenteditable]{background:#fff8dc;}
 </style>
 </head>
 
 <body>
+
 <div id="app"></div>
 
 <script>
 let app=document.getElementById("app");
+
+// ---------- NAVIGATION ----------
 function show(html){app.innerHTML=html;}
 
-// HOME
+// ---------- HOME ----------
 function home(){
 show(`
 <div class="page black">
 <img src="https://raw.githubusercontent.com/pruthviraj3837-collab/Pickdesk2026/main/Gemini_Generated_Image_v28qxev28qxev28q%20(1).png"
-style="width:100%;height:100%;object-fit:cover;position:absolute;">
+style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;">
 <button class="btn" style="position:absolute;bottom:30px;" onclick="tools()">NEXT →</button>
 </div>
 `);
 }
 
-// TOOLS
+// ---------- TOOLS ----------
 function tools(){
 show(`
 <div class="page black">
@@ -86,7 +81,7 @@ show(`
 `);
 }
 
-// PICK
+// ---------- PICK ----------
 function pickTools(){
 show(`
 <div class="page black">
@@ -99,7 +94,7 @@ show(`
 `);
 }
 
-// PACK
+// ---------- PACK ----------
 function packTools(){
 show(`
 <div class="page black">
@@ -109,27 +104,32 @@ show(`
 `);
 }
 
+// ---------- UNDER ----------
 function under(){
-show(`<div class="page black"><h1>Coming Soon</h1></div>`);
+show(`
+<div class="page black">
+<h1>Will be added soon</h1>
+<button class="btn" onclick="tools()">⬅ BACK</button>
+</div>
+`);
 }
 
-// LINKS
+// ---------- LINKS ----------
 function links(){
-const linksData=[
-{name:"RODEO CPT",url:"https://rodeo-dub.amazon.com"},
-{name:"DWELL",url:"https://rodeo-dub.amazon.com"},
-{name:"TRANS",url:"https://rodeo-dub.amazon.com"}
-];
+show(`
+<div class="page white">
+<h1>PICK LINKS</h1>
 
-let html=`<div class="page white"><h1>PICK LINKS</h1><div style="height:70vh;overflow:auto;">`;
-linksData.forEach(l=>{
-html+=`<button class="btn" onclick="window.open('${l.url}','_blank')">${l.name}</button>`;
-});
-html+=`</div><button class="btn" onclick="pickTools()">⬅ BACK</button></div>`;
-show(html);
+<button class="btn" onclick="openLink('https://rodeo-dub-amazon.com)">RODEO</button>
+<button class="btn" onclick="openLink('https://amazon.com')">Example Link 2</button>
+
+<button class="btn" onclick="pickTools()">⬅ BACK</button>
+</div>
+`);
 }
+function openLink(url){window.open(url,"_blank");}
 
-// TRACKER
+// ---------- TRACKER UI ----------
 function trackerUI(type){
 show(`
 <div class="page white">
@@ -138,9 +138,14 @@ show(`
 <input type="file" id="f1">
 <input type="file" id="f2"><br>
 <button class="btn" onclick="process()">PROCESS</button>
-<button class="btn" onclick="downloadExcel()">DOWNLOAD EXCEL</button>
+
+<div>
+<button class="btn" onclick="mode='hours';render()">HOURS</button>
+<button class="btn" onclick="mode='quarters';render()">QUARTERS</button>
+</div>
 
 <div id="out"></div>
+
 <button class="btn" onclick="tools()">⬅ BACK</button>
 </div>
 `);
@@ -149,40 +154,124 @@ show(`
 function pickTracker(){trackerUI("PICK");}
 function packTracker(){trackerUI("PACK");}
 
-let data=[];
+// ---------- DATA ----------
+let data=[],mode="quarters";
 
-// PROCESS (Sample working)
+// ---------- PROCESS ----------
 async function process(){
-out.innerHTML=`
-<h2>LC SPLIT</h2>
-<table>
-<tr><th>LC</th><th>Total</th><th>Infer</th><th>UIT%</th></tr>
-<tr><td>L1</td><td>10.00</td><td>2.00</td><td>20%</td></tr>
-<tr class="grand"><td>TOTAL</td><td>10.00</td><td>2.00</td><td>20%</td></tr>
-</table>
+let emp=await read(f1.files[0]);
+let lc=await read(f2.files[0]);
 
-<h2>TOP UIT DEFAULTERS</h2>
-<table>
-<tr><th>Name</th><th>Login</th><th>LC</th><th>Infer</th><th>Total</th><th>UIT%</th><th>Comments</th><th>Coaching</th></tr>
+function col(o,k){return Object.keys(o).find(c=>c.toLowerCase().includes(k));}
+function lcFix(v){
+v=(v||"")+"";
+if(v.includes("1"))return "L1";
+if(v.includes("2"))return "L2";
+if(v.includes("3"))return "L3";
+if(v.includes("4"))return "L4";
+if(v.includes("5"))return "L5";
+return "L1";
+}
+
+let map={},lmap={};
+lc.forEach(r=>{
+map[(r[col(r,"name")]||"").toLowerCase()]=r[col(r,"login")];
+lmap[(r[col(r,"name")]||"").toLowerCase()]=lcFix(r[col(r,"lc")]);
+});
+
+data=emp.map(r=>{
+let k=(r[col(r,"name")]||"").toLowerCase();
+return{
+name:r[col(r,"name")],
+login:map[k]||"",
+lc:lmap[k]||"L1",
+total:+r[col(r,"total")]||0,
+infer:+r[col(r,"infer")]||0
+};
+});
+
+render();
+}
+
+// ---------- RENDER ----------
+function render(){
+
+// LC TABLE
+let lcs=["L1","L2","L3","L4","L5"];
+let html=`<h2>LC SPLIT</h2><table>
+<tr><th>LC</th><th>Total</th><th>Infer</th><th>UIT%</th></tr>`;
+
+let gt=0,gi=0;
+
+lcs.forEach(l=>{
+let f=data.filter(x=>x.lc===l);
+let t=f.reduce((a,b)=>a+b.total,0);
+let i=f.reduce((a,b)=>a+b.infer,0);
+
+gt+=t; gi+=i;
+
+html+=`<tr>
+<td>${l}</td>
+<td>${t.toFixed(2)}</td>
+<td>${i.toFixed(2)}</td>
+<td>${t?((i/t)*100).toFixed(2):0}%</td>
+</tr>`;
+});
+
+html+=`<tr class="grand">
+<td>TOTAL</td>
+<td>${gt.toFixed(2)}</td>
+<td>${gi.toFixed(2)}</td>
+<td>${gt?((gi/gt)*100).toFixed(2):0}%</td>
+</tr></table>`;
+
+// TOP
+let top=[...data].filter(x=>x.total>0)
+.sort((a,b)=>(b.infer/b.total)-(a.infer/a.total)).slice(0,20);
+
+html+=`<h2>TOP DEFAULTERS</h2><table>
 <tr>
-<td>Sample</td><td>ID1</td><td>L1</td><td>2</td><td>10</td><td>20%</td>
-<td contenteditable class="commentBox"></td>
-<td contenteditable></td>
-</tr>
-</table>
+<th>Name</th><th>Login</th><th>LC</th>
+<th>Infer</th><th>Total</th><th>UIT%</th>
+<th>Remarks</th><th>Coaching</th>
+</tr>`;
 
-<h2>PICK UIT</h2>
-<table class="uit">
-<tr><th>Type</th><th>H1</th><th>H2</th><th>Total</th></tr>
-<tr><td>Total</td><td contenteditable></td><td contenteditable></td><td></td></tr>
-<tr><td>Infer</td><td contenteditable></td><td contenteditable></td><td></td></tr>
-<tr><td>UIT%</td><td></td><td></td><td></td></tr>
-</table>
-`;
+top.forEach(r=>{
+html+=`<tr>
+<td>${r.name}</td>
+<td>${r.login}</td>
+<td>${r.lc}</td>
+<td>${r.infer.toFixed(2)}</td>
+<td>${r.total.toFixed(2)}</td>
+<td>${((r.infer/r.total)*100).toFixed(2)}%</td>
+<td contenteditable></td>
+<td contenteditable></td>
+</tr>`;
+});
+
+html+=`</table>`;
+
+// UIT TABLE
+html+=uitTable();
+
+out.innerHTML=html;
 calcUIT();
 }
 
-// UIT CALC
+// ---------- UIT ----------
+function uitTable(){
+let cols=mode==="hours"
+?Array.from({length:10},(_,i)=>"Hour"+(i+1))
+:["Q1","Q2","Q3"];
+
+return `<h2>UIT</h2><table class="uit">
+<tr><th></th>${cols.map(c=>`<th>${c}</th>`)}<th>Total</th></tr>
+<tr><td>Total</td>${cols.map(()=>`<td contenteditable></td>`)}<td></td></tr>
+<tr><td>Infer</td>${cols.map(()=>`<td contenteditable></td>`)}<td></td></tr>
+<tr><td>UIT%</td>${cols.map(()=>`<td></td>`)}<td></td></tr>
+</table>`;
+}
+
 function calcUIT(){
 document.querySelectorAll(".uit").forEach(t=>{
 let total=t.rows[1].cells;
@@ -209,12 +298,16 @@ infer[i].oninput=update;
 });
 }
 
-// DOWNLOAD
-function downloadExcel(){
-let wb=XLSX.utils.book_new();
-let ws=XLSX.utils.aoa_to_sheet([["UIT REPORT READY"]]);
-XLSX.utils.book_append_sheet(wb,ws,"Report");
-XLSX.writeFile(wb,"UIT_Report.xlsx");
+// ---------- READ ----------
+function read(file){
+return new Promise(res=>{
+let r=new FileReader();
+r.onload=e=>{
+let wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+res(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]));
+};
+r.readAsArrayBuffer(file);
+});
 }
 
 // START
