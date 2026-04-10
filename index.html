@@ -51,17 +51,17 @@ document.head.appendChild(style);
 
 function show(p){app.innerHTML=p;}
 
-// ✅ UPDATED HOME (ONLY CHANGE)
+// ✅ HOME WITH IMAGE
 function home(){
 show(`
 <div class="full" style="height:100vh;display:flex;justify-content:center;align-items:center;flex-direction:column;">
 
-<img src="https://github.com/pruthviraj3837-collab/Pickdesk2026/blob/73f07375764c55d85c11308c08a0063767d62f34/Gemini_Generated_Image_v28qxev28qxev28q%20(1).png" (1).png id="mainImg"
+<img src="https://raw.githubusercontent.com/pruthviraj3837-collab/Pickdesk2026/main/Gemini_Generated_Image_v28qxev28qxev28q%20(1).png"
+id="mainImg"
 style="width:90%;max-width:1400px;border-radius:12px;cursor:pointer;">
 
 </div>
 `);
-
 document.getElementById("mainImg").onclick=tools;
 }
 
@@ -77,7 +77,7 @@ pick.onclick=pickTools;
 pack.onclick=under;
 }
 
-// PICK
+// PICK TOOLS
 function pickTools(){
 show(`
 <div class="full">
@@ -93,21 +93,18 @@ tm.onclick=under;
 io.onclick=under;
 }
 
-// UNDER
+// UNDER PAGE
 function under(){
 show(`
-<div style="height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;background:white;">
-<h1 style="color:#ff9900;font-size:40px;">Page Under Construction</h1>
-<p style="font-size:18px;color:#555;margin-top:10px;text-align:center;">
-This feature will be available soon.
-</p>
-<button class="btn" id="backBtn">⬅ Back to Tools</button>
+<div style="height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+<h1 style="color:#ff9900;">Page Under Construction</h1>
+<button class="btn" id="backBtn">⬅ Back</button>
 </div>
 `);
-document.getElementById("backBtn").onclick=tools;
+backBtn.onclick=tools;
 }
 
-// TRACKER
+// TRACKER PAGE
 function trackerPage(){
 show(`
 <h1>PICK LC UIT TRACKER</h1>
@@ -131,9 +128,8 @@ q.onclick=()=>{mode="quarters";render();}
 h.onclick=()=>{mode="hours";render();}
 }
 
-// PROCESS
+// PROCESS DATA
 async function processData(){
-
 let emp=await read(f1.files[0]);
 let lc=await read(f2.files[0]);
 
@@ -179,7 +175,7 @@ calcTop();
 render();
 }
 
-// LC
+// LC SUMMARY
 function calcLC(){
 let lcs=["LC1","LC2","LC3","LC4","LC5"];
 let res=[],gt=0,gi=0,gc=0;
@@ -191,7 +187,6 @@ let t=f.reduce((a,b)=>a+b.total,0);
 let i=f.reduce((a,b)=>a+b.infer,0);
 
 gt+=t; gi+=i; gc+=u.size;
-
 res.push({l,count:u.size,t,i,u:(i/t*100||0)});
 });
 
@@ -199,7 +194,7 @@ res.push({l:"TOTAL",count:gc,t:gt,i:gi,u:(gi/gt*100||0)});
 lcSummary=res;
 }
 
-// TOP
+// TOP DATA
 function calcTop(){
 topData=[...mergedData].sort((a,b)=>(b.infer/b.total)-(a.infer/a.total)).slice(0,20);
 }
@@ -207,21 +202,14 @@ topData=[...mergedData].sort((a,b)=>(b.infer/b.total)-(a.infer/a.total)).slice(0
 // RENDER
 function render(){
 
-const remarks=[
-"PACK TO PICK","Multiple times floor change","Multiple barcode issue",
-"Alexa not connected","Nonsort movement","VRC issue",
-"Health issue","Late reporting","No carts available",
-"Washroom","Scanner issue","Picker mistake",
-"Long distance bins","QA/Hot pick","HOV movement"
-];
+const remarks=["PACK TO PICK","Barcode issue","Health issue"];
 
 let html=`<h2>LC SPLIT</h2><table>
 <tr><th>LC</th><th>AAs</th><th>Total</th><th>Infer</th><th>UIT%</th></tr>`;
 
 lcSummary.forEach(r=>{
-html+=`<tr class="${r.l==="TOTAL"?'grand':''}">
-<td>${r.l}</td>
-<td>${r.count}</td>
+html+=`<tr>
+<td>${r.l}</td><td>${r.count}</td>
 <td>${r.t.toFixed(2)}</td>
 <td>${r.i.toFixed(2)}</td>
 <td>${r.u.toFixed(2)}%</td>
@@ -230,28 +218,68 @@ html+=`<tr class="${r.l==="TOTAL"?'grand':''}">
 
 html+=`</table>`;
 
+// TOP
 html+=`<h2>TOP DEFAULTERS</h2><table>
-<tr><th>Name</th><th>Login</th><th>Total</th><th>Infer</th><th>UIT%</th><th>UPH</th><th>Qty</th><th>Remarks</th><th>Coaching</th></tr>`;
+<tr><th>Name</th><th>Login</th><th>Total</th><th>Infer</th><th>UIT%</th></tr>`;
 
 topData.forEach(r=>{
 html+=`<tr>
 <td>${r.name}</td>
 <td>${r.login}</td>
-<td>${r.total.toFixed(2)}</td>
-<td>${r.infer.toFixed(2)}</td>
+<td>${r.total}</td>
+<td>${r.infer}</td>
 <td>${((r.infer/r.total)*100).toFixed(2)}%</td>
-<td>${r.uph}</td>
-<td>${r.qty}</td>
-<td><select><option></option>${remarks.map(x=>`<option>${x}</option>`).join("")}</select></td>
-<td><select><option></option><option>Done</option><option>Pending</option></select></td>
 </tr>`;
 });
 
 html+=`</table>`;
+
+// ✅ UIT TABLES BACK
+html+=createUIT("PICK UIT")+createUIT("TRANS UIT")+createUIT("V-RET UIT");
+
 out.innerHTML=html;
+setTimeout(calcUIT,100);
 }
 
-// READ
+// UIT CREATE
+function createUIT(title){
+let h=mode==="hours"
+?Array.from({length:10},(_,i)=>"HOUR"+(i+1))
+:["Q1","Q2","Q3"];
+
+return `<h2>${title}</h2><table class="uit">
+<tr><th>UITs</th>${h.map(x=>`<th>${x}</th>`)}<th>Total</th></tr>
+<tr><td>Total</td>${h.map(()=>`<td contenteditable></td>`)}<td></td></tr>
+<tr><td>Infer</td>${h.map(()=>`<td contenteditable></td>`)}<td></td></tr>
+<tr><td>UIT%</td>${h.map(()=>`<td></td>`)}<td></td></tr>
+</table>`;
+}
+
+// UIT CALC
+function calcUIT(){
+document.querySelectorAll(".uit").forEach(t=>{
+let total=t.rows[1].cells;
+let infer=t.rows[2].cells;
+let uit=t.rows[3].cells;
+
+for(let i=1;i<total.length-1;i++){
+total[i].oninput=infer[i].oninput=()=>{
+let ts=0,is=0;
+for(let j=1;j<total.length-1;j++){
+let a=parseFloat(total[j].innerText)||0;
+let b=parseFloat(infer[j].innerText)||0;
+ts+=a; is+=b;
+uit[j].innerText=a?((b/a)*100).toFixed(2)+"%":"";
+}
+total[total.length-1].innerText=ts;
+infer[infer.length-1].innerText=is;
+uit[uit.length-1].innerText=ts?((is/ts)*100).toFixed(2)+"%":"";
+};
+}
+});
+}
+
+// READ FILE
 function read(file){
 return new Promise(res=>{
 let r=new FileReader();
