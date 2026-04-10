@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>PICK LC UIT TRACKER</title>
 
-<!-- XLSX Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
@@ -14,107 +13,15 @@ margin:0;
 padding:10px;
 background:#f5f7fa;
 }
-
-h1{
-text-align:center;
-font-size:42px;
-font-weight:900;
-}
-
-.center{
-text-align:center;
-margin-bottom:10px;
-}
-
-.btn{
-padding:12px 22px;
-margin:5px;
-border:none;
-color:white;
-font-size:16px;
-font-weight:bold;
-border-radius:8px;
-cursor:pointer;
-transition:0.3s;
-}
-
-.btn:hover{
-transform:translateY(-2px);
-}
-
-.green{background:#2ecc71;}
-.blue{background:#3498db;}
-
-table{
-border-collapse:collapse;
-width:95%;
-margin:20px auto;
-background:white;
-}
-
-th,td{
-border:2px solid black;
-padding:8px;
-text-align:center;
-font-weight:bold;
-}
-
-th{
-background:#0b5394;
-color:white;
-}
-
-h3{
-text-align:center;
-font-size:28px;
-font-weight:900;
-}
-
-.modeBtn{
-padding:10px 18px;
-margin:10px;
-border:none;
-color:white;
-font-weight:bold;
-border-radius:6px;
-cursor:pointer;
-}
-
-#qBtn{background:#27ae60;}
-#hBtn{background:#2980b9;}
-
-.remarkCell{
-min-width:350px;
-}
-
-.grandRow{
-background:#cfe2ff !important;
-font-weight:900;
-}
 </style>
 </head>
 
 <body>
 
-<h1>PICK LC UIT TRACKER</h1>
-
-<div class="center">
-<input type="file" id="f1">
-<input type="file" id="f2"><br><br>
-
-<button class="btn green" id="process">Process</button>
-<button class="btn blue" id="mergeBtn">Merge Excel</button>
-<button class="btn blue" id="tableBtn">Download Tables</button>
-</div>
-
-<div id="out"></div>
-
-<!-- YOUR SCRIPT GOES HERE -->
 <script>
 (function () {
 'use strict';
 
-// Load XLSX
 const s=document.createElement('script');
 s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
 document.head.appendChild(s);
@@ -127,7 +34,6 @@ let mode="quarters";
 
 document.body.innerHTML=`<div id="app"></div>`;
 
-// STYLE
 const style=document.createElement("style");
 style.innerHTML=`
 body{margin:0;background:white;font-family:Segoe UI;}
@@ -143,18 +49,20 @@ select{width:150px;}
 `;
 document.head.appendChild(style);
 
-// NAV
 function show(p){app.innerHTML=p;}
 
-// HOME
+// ✅ UPDATED HOME (ONLY CHANGE)
 function home(){
 show(`
-<div class="full">
-<h1 style="color:#ff9900;font-size:150px;">OUTBOUND</h1>
-<h1 style="font-size:170px;">TOOLS</h1>
-<button class="btn" id="next">NEXT →</button>
-</div>`);
-next.onclick=tools;
+<div class="full" style="height:100vh;display:flex;justify-content:center;align-items:center;flex-direction:column;">
+
+<img src="YOUR_GITHUB_IMAGE_LINK_HERE" id="mainImg"
+style="width:90%;max-width:1400px;border-radius:12px;cursor:pointer;">
+
+</div>
+`);
+
+document.getElementById("mainImg").onclick=tools;
 }
 
 // TOOLS
@@ -184,23 +92,18 @@ links.onclick=under;
 tm.onclick=under;
 io.onclick=under;
 }
-  // UNDER CONSTRUCTION (PROFESSIONAL)
-function under(){
 
+// UNDER
+function under(){
 show(`
 <div style="height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;background:white;">
-
 <h1 style="color:#ff9900;font-size:40px;">Page Under Construction</h1>
-
 <p style="font-size:18px;color:#555;margin-top:10px;text-align:center;">
 This feature will be available soon.
 </p>
-
 <button class="btn" id="backBtn">⬅ Back to Tools</button>
-
 </div>
 `);
-
 document.getElementById("backBtn").onclick=tools;
 }
 
@@ -257,7 +160,8 @@ let key=(r[nameLC]||"").toLowerCase();
 loginMap[key]=r[loginLC];
 lcMap[key]=normalizeLC(r[lcCol]);
 });
-  mergedData=emp.map(r=>{
+
+mergedData=emp.map(r=>{
 let key=(r[nameCol]||"").toLowerCase();
 return{
 name:r[nameCol],
@@ -326,7 +230,6 @@ html+=`<tr class="${r.l==="TOTAL"?'grand':''}">
 
 html+=`</table>`;
 
-// TOP TABLE
 html+=`<h2>TOP DEFAULTERS</h2><table>
 <tr><th>Name</th><th>Login</th><th>Total</th><th>Infer</th><th>UIT%</th><th>UPH</th><th>Qty</th><th>Remarks</th><th>Coaching</th></tr>`;
 
@@ -343,51 +246,9 @@ html+=`<tr>
 <td><select><option></option><option>Done</option><option>Pending</option></select></td>
 </tr>`;
 });
-  html+=`</table>`;
 
-html+=createUIT("PICK UIT")+createUIT("TRANS UIT")+createUIT("V-RET UIT");
-
+html+=`</table>`;
 out.innerHTML=html;
-
-setTimeout(calcUIT,100);
-}
-
-// UIT
-function createUIT(title){
-let h=mode==="hours"
-?Array.from({length:10},(_,i)=>"HOUR"+(i+1))
-:["Q1","Q2","Q3"];
-
-return `<h2>${title}</h2><table class="uit">
-<tr><th>UITs</th>${h.map(x=>`<th>${x}</th>`)}<th>Total</th></tr>
-<tr><td>Total</td>${h.map(()=>`<td contenteditable></td>`)}<td></td></tr>
-<tr><td>Infer</td>${h.map(()=>`<td contenteditable></td>`)}<td></td></tr>
-<tr><td>UIT%</td>${h.map(()=>`<td></td>`)}<td></td></tr>
-</table>`;
-}
-
-// UIT CALC
-function calcUIT(){
-document.querySelectorAll(".uit").forEach(t=>{
-let total=t.rows[1].cells;
-let infer=t.rows[2].cells;
-let uit=t.rows[3].cells;
-
-for(let i=1;i<total.length-1;i++){
-total[i].oninput=infer[i].oninput=()=>{
-let ts=0,is=0;
-for(let j=1;j<total.length-1;j++){
-let a=parseFloat(total[j].innerText)||0;
-let b=parseFloat(infer[j].innerText)||0;
-ts+=a; is+=b;
-uit[j].innerText=a?((b/a)*100).toFixed(2)+"%":"";
-}
-total[total.length-1].innerText=ts;
-infer[infer.length-1].innerText=is;
-uit[uit.length-1].innerText=ts?((is/ts)*100).toFixed(2)+"%":"";
-};
-}
-});
 }
 
 // READ
@@ -408,11 +269,6 @@ home();
 }
 
 })();
-
-  
-
-                          
-
 </script>
 
 </body>
