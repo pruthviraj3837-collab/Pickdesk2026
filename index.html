@@ -8,7 +8,6 @@
 <style>
 body{margin:0;font-family:Segoe UI;}
 
-/* Pages */
 .page{
 height:100vh;
 display:flex;
@@ -21,7 +20,6 @@ position:relative;
 .black{background:#000;color:white;}
 .white{background:#fff;color:black;}
 
-/* Buttons */
 .btn{
 background:#ff9900;
 color:#000;
@@ -36,7 +34,6 @@ box-shadow:0 3px 8px rgba(0,0,0,0.3);
 }
 .btn:hover{transform:scale(1.05);}
 
-/* Tables */
 table{
 border-collapse:collapse;
 margin:12px auto;
@@ -45,9 +42,11 @@ font-size:12px;
 }
 
 th{
-background:#2ecc71;
-color:#000;
+background:#3498db;
+color:#fff;
 padding:6px;
+text-align:center;
+font-weight:bold;
 }
 
 td{
@@ -57,16 +56,16 @@ text-align:center;
 }
 
 tr:nth-child(even){background:#f2f2f2;}
-.grand{background:#c6efce;font-weight:bold;}
 
-td[contenteditable]{
-background:#fff8dc;
+.grand{
+background:#d6eaf8;
+font-weight:bold;
 }
 
-/* Inputs */
+td[contenteditable]{background:#fff8dc;}
+
 input{margin:5px;padding:5px;}
 h1,h2{margin:10px;}
-
 </style>
 </head>
 
@@ -77,10 +76,9 @@ h1,h2{margin:10px;}
 <script>
 let app=document.getElementById("app");
 
-// ---------- NAV ----------
 function show(html){app.innerHTML=html;}
 
-// ---------- HOME ----------
+// HOME
 function home(){
 show(`
 <div class="page black">
@@ -91,7 +89,7 @@ style="position:absolute;width:100%;height:100%;object-fit:cover;">
 `);
 }
 
-// ---------- TOOLS ----------
+// TOOLS
 function tools(){
 show(`
 <div class="page black">
@@ -102,7 +100,7 @@ show(`
 `);
 }
 
-// ---------- PICK ----------
+// PICK
 function pickTools(){
 show(`
 <div class="page black">
@@ -116,7 +114,7 @@ show(`
 `);
 }
 
-// ---------- PACK ----------
+// PACK
 function packTools(){
 show(`
 <div class="page black">
@@ -127,43 +125,46 @@ show(`
 `);
 }
 
-// ---------- UNDER ----------
 function under(){
-show(`
-<div class="page black">
-<h1>Will be added soon</h1>
-<button class="btn" onclick="tools()">⬅ BACK</button>
-</div>
-`);
+show(`<div class="page black"><h1>Will be added soon</h1>
+<button class="btn" onclick="tools()">⬅ BACK</button></div>`);
 }
 
-// ---------- LINKS ----------
-function openLink(url){
-window.open(url,'_blank');
-}
+// LINKS (dynamic)
+function openLink(url){window.open(url,'_blank');}
 
 function links(){
-show(`
-<div class="page white">
+let linksData=[
+{name:"FCLM",url:"https://fclm-portal.amazon.com"},
+{name:"AFTLITE",url:"https://aftlite.amazon.com"},
+{name:"RODEO",url:"https://rodeo.amazon.com"},
+{name:"INSIDE",url:"https://inside.amazon.com"},
+{name:"QUIP",url:"https://quip-amazon.com"},
+{name:"WIKI",url:"https://w.amazon.com"},
+{name:"A TO Z",url:"https://atoz.amazon.work"},
+{name:"KIBANA",url:"https://kibana.amazon.com"},
+{name:"SLACK",url:"https://slack.com"},
+{name:"OUTLOOK",url:"https://outlook.office.com"},
+{name:"GOOGLE",url:"https://google.com"},
+{name:"YOUTUBE",url:"https://youtube.com"},
+{name:"GITHUB",url:"https://github.com"},
+{name:"CHATGPT",url:"https://chat.openai.com"}
+];
+
+let buttons=linksData.map(l=>`<button class="btn" onclick="openLink('${l.url}')">${l.name}</button>`).join("");
+
+show(`<div class="page white">
 <h1>PICK LINKS</h1>
-
-<button class="btn" onclick="openLink('https://fclm-portal.amazon.com')">FCLM</button>
-<button class="btn" onclick="openLink('https://aftlite.amazon.com')">AFTLITE</button>
-<button class="btn" onclick="openLink('https://rodeo.amazon.com')">RODEO</button>
-<button class="btn" onclick="openLink('https://inside.amazon.com')">INSIDE</button>
-<button class="btn" onclick="openLink('https://quip-amazon.com')">QUIP</button>
-<button class="btn" onclick="openLink('https://w.amazon.com')">WIKI</button>
-<button class="btn" onclick="openLink('https://na.amazon.com')">NETWORK</button>
-<button class="btn" onclick="openLink('https://hr.amazon.com')">HR</button>
-<button class="btn" onclick="openLink('https://atoz.amazon.work')">A TO Z</button>
-<button class="btn" onclick="openLink('https://google.com')">GOOGLE</button>
-
-<button class="btn" onclick="pickTools()">⬅ BACK</button>
+<div style="width:90%;display:flex;flex-wrap:wrap;justify-content:center;">
+${buttons}
 </div>
-`);
+<button class="btn" onclick="pickTools()">⬅ BACK</button>
+</div>`);
 }
 
-// ---------- TRACKER UI ----------
+// TRACKER
+let data=[],mode="quarters";
+
 function trackerUI(type){
 show(`
 <div class="page white">
@@ -179,7 +180,6 @@ show(`
 </div>
 
 <div id="out"></div>
-
 <button class="btn" onclick="tools()">⬅ BACK</button>
 </div>
 `);
@@ -188,10 +188,7 @@ show(`
 function pickTracker(){trackerUI("PICK");}
 function packTracker(){trackerUI("PACK");}
 
-// ---------- DATA ----------
-let data=[],mode="quarters";
-
-// ---------- PROCESS ----------
+// PROCESS
 async function process(){
 let emp=await read(f1.files[0]);
 let lc=await read(f2.files[0]);
@@ -220,20 +217,19 @@ infer:+r[col(r,"infer")]||0
 render();
 }
 
-// ---------- RENDER ----------
+// RENDER
 function render(){
 
-let lcs=["L1","L2","L3","L4","L5"];
 let html=`<h2>LC SPLIT</h2><table>
 <tr><th>LC</th><th>Total</th><th>Infer</th><th>UIT%</th></tr>`;
 
+let lcs=["L1","L2","L3","L4","L5"];
 let gt=0,gi=0;
 
 lcs.forEach(l=>{
 let f=data.filter(x=>x.lc===l);
 let t=f.reduce((a,b)=>a+b.total,0);
 let i=f.reduce((a,b)=>a+b.infer,0);
-
 gt+=t; gi+=i;
 
 html+=`<tr>
@@ -251,7 +247,7 @@ html+=`<tr class="grand">
 <td>${gt?((gi/gt)*100).toFixed(2):0}%</td>
 </tr></table>`;
 
-// TOP
+// TOP TABLE
 let top=[...data].filter(x=>x.total>0)
 .sort((a,b)=>(b.infer/b.total)-(a.infer/a.total)).slice(0,20);
 
@@ -259,6 +255,7 @@ html+=`<h2 style="text-align:center;">TOP DEFAULTERS</h2><table>
 <tr>
 <th>Name</th><th>Login</th><th>LC</th>
 <th>Infer</th><th>Total</th><th>UIT%</th>
+<th>UPH</th><th>Quantity</th>
 <th>Remarks</th><th>Coaching</th>
 </tr>`;
 
@@ -272,18 +269,19 @@ html+=`<tr>
 <td>${((r.infer/r.total)*100).toFixed(2)}%</td>
 <td contenteditable></td>
 <td contenteditable></td>
+<td contenteditable></td>
+<td contenteditable></td>
 </tr>`;
 });
 
 html+=`</table>`;
-
 html+=uitTable();
 
 out.innerHTML=html;
 calcUIT();
 }
 
-// ---------- UIT ----------
+// UIT TABLE
 function uitTable(){
 let cols=mode==="hours"
 ?Array.from({length:10},(_,i)=>"H"+(i+1))
@@ -297,6 +295,7 @@ return `<h2>UIT</h2><table class="uit">
 </table>`;
 }
 
+// CALC
 function calcUIT(){
 document.querySelectorAll(".uit").forEach(t=>{
 let total=t.rows[1].cells;
@@ -323,7 +322,7 @@ infer[i].oninput=update;
 });
 }
 
-// ---------- READ ----------
+// READ
 function read(file){
 return new Promise(res=>{
 let r=new FileReader();
