@@ -78,7 +78,7 @@ let app=document.getElementById("app");
 
 function show(html){app.innerHTML=html;}
 
-// HOME
+// ---------- HOME ----------
 function home(){
 show(`
 <div class="page black">
@@ -89,7 +89,7 @@ style="position:absolute;width:100%;height:100%;object-fit:cover;">
 `);
 }
 
-// TOOLS
+// ---------- TOOLS ----------
 function tools(){
 show(`
 <div class="page black">
@@ -100,7 +100,7 @@ show(`
 `);
 }
 
-// PICK
+// ---------- PICK ----------
 function pickTools(){
 show(`
 <div class="page black">
@@ -114,7 +114,7 @@ show(`
 `);
 }
 
-// PACK
+// ---------- PACK ----------
 function packTools(){
 show(`
 <div class="page black">
@@ -125,12 +125,15 @@ show(`
 `);
 }
 
+// ---------- UNDER ----------
 function under(){
-show(`<div class="page black"><h1>Will be added soon</h1>
-<button class="btn" onclick="tools()">⬅ BACK</button></div>`);
+show(`<div class="page black">
+<h1>Will be added soon</h1>
+<button class="btn" onclick="tools()">⬅ BACK</button>
+</div>`);
 }
 
-// LINKS (dynamic)
+// ---------- LINKS ----------
 function openLink(url){window.open(url,'_blank');}
 
 function links(){
@@ -143,11 +146,20 @@ let linksData=[
 {name:"WIKI",url:"https://w.amazon.com"},
 {name:"A TO Z",url:"https://atoz.amazon.work"},
 {name:"KIBANA",url:"https://kibana.amazon.com"},
+{name:"SCP",url:"https://scp.amazon.com"},
+{name:"IT SUPPORT",url:"https://it.amazon.com"},
+{name:"PAYROLL",url:"https://payroll.amazon.com"},
+{name:"MYTIME",url:"https://mytime.amazon.com"},
+{name:"LEARNING",url:"https://learning.amazon.com"},
+{name:"VPN",url:"https://vpn.amazon.com"},
 {name:"SLACK",url:"https://slack.com"},
+{name:"CHIME",url:"https://app.chime.aws"},
 {name:"OUTLOOK",url:"https://outlook.office.com"},
+{name:"SHAREPOINT",url:"https://sharepoint.com"},
+{name:"ONEDRIVE",url:"https://onedrive.live.com"},
+{name:"GITHUB",url:"https://github.com"},
 {name:"GOOGLE",url:"https://google.com"},
 {name:"YOUTUBE",url:"https://youtube.com"},
-{name:"GITHUB",url:"https://github.com"},
 {name:"CHATGPT",url:"https://chat.openai.com"}
 ];
 
@@ -162,7 +174,7 @@ ${buttons}
 </div>`);
 }
 
-// TRACKER
+// ---------- TRACKER ----------
 let data=[],mode="quarters";
 
 function trackerUI(type){
@@ -188,7 +200,7 @@ show(`
 function pickTracker(){trackerUI("PICK");}
 function packTracker(){trackerUI("PACK");}
 
-// PROCESS
+// ---------- PROCESS ----------
 async function process(){
 let emp=await read(f1.files[0]);
 let lc=await read(f2.files[0]);
@@ -205,26 +217,36 @@ lmap[name]=(r[col(r,"lc")]||"L1");
 
 data=emp.map(r=>{
 let k=(r[col(r,"name")]||"").toLowerCase();
+
+let total=+r[col(r,"total")]||0;
+let qty=+r[col(r,"qty")]||+r[col(r,"quantity")]||+r[col(r,"unit")]||0;
+
 return{
 name:r[col(r,"name")],
 login:map[k]||"",
 lc:lmap[k]||"L1",
-total:+r[col(r,"total")]||0,
-infer:+r[col(r,"infer")]||0
+process:(r[col(r,"process")]||"PICK").toUpperCase(),
+total:total,
+infer:+r[col(r,"infer")]||0,
+qty:qty,
+uph: total ? (qty/total) : 0
 };
 });
 
 render();
 }
 
-// RENDER
+// ---------- RENDER ----------
 function render(){
 
-let html=`<h2>LC SPLIT</h2><table>
-<tr><th>LC</th><th>Total</th><th>Infer</th><th>UIT%</th></tr>`;
+let html="";
 
+// LC SPLIT
 let lcs=["L1","L2","L3","L4","L5"];
 let gt=0,gi=0;
+
+html+=`<h2>LC SPLIT</h2><table>
+<tr><th>LC</th><th>Total</th><th>Infer</th><th>UIT%</th></tr>`;
 
 lcs.forEach(l=>{
 let f=data.filter(x=>x.lc===l);
@@ -247,19 +269,23 @@ html+=`<tr class="grand">
 <td>${gt?((gi/gt)*100).toFixed(2):0}%</td>
 </tr></table>`;
 
-// TOP TABLE
-let top=[...data].filter(x=>x.total>0)
-.sort((a,b)=>(b.infer/b.total)-(a.infer/a.total)).slice(0,20);
+// PROCESS TABLES
+["PICK","TRANS","VRET"].forEach(p=>{
 
-html+=`<h2 style="text-align:center;">TOP DEFAULTERS</h2><table>
+let list=data.filter(x=>x.process.includes(p) && x.total>0)
+.sort((a,b)=>(b.infer/b.total)-(a.infer/a.total)).slice(0,15);
+
+if(list.length===0) return;
+
+html+=`<h2 style="text-align:center;">${p} TOP DEFAULTERS</h2><table>
 <tr>
 <th>Name</th><th>Login</th><th>LC</th>
 <th>Infer</th><th>Total</th><th>UIT%</th>
-<th>UPH</th><th>Quantity</th>
+<th>Quantity</th><th>UPH</th>
 <th>Remarks</th><th>Coaching</th>
 </tr>`;
 
-top.forEach(r=>{
+list.forEach(r=>{
 html+=`<tr>
 <td>${r.name}</td>
 <td>${r.login}</td>
@@ -267,21 +293,23 @@ html+=`<tr>
 <td>${r.infer.toFixed(2)}</td>
 <td>${r.total.toFixed(2)}</td>
 <td>${((r.infer/r.total)*100).toFixed(2)}%</td>
-<td contenteditable></td>
-<td contenteditable></td>
+<td>${r.qty.toFixed(0)}</td>
+<td>${r.uph.toFixed(2)}</td>
 <td contenteditable></td>
 <td contenteditable></td>
 </tr>`;
 });
 
 html+=`</table>`;
+});
+
 html+=uitTable();
 
 out.innerHTML=html;
 calcUIT();
 }
 
-// UIT TABLE
+// ---------- UIT ----------
 function uitTable(){
 let cols=mode==="hours"
 ?Array.from({length:10},(_,i)=>"H"+(i+1))
@@ -295,7 +323,7 @@ return `<h2>UIT</h2><table class="uit">
 </table>`;
 }
 
-// CALC
+// ---------- CALC ----------
 function calcUIT(){
 document.querySelectorAll(".uit").forEach(t=>{
 let total=t.rows[1].cells;
@@ -322,7 +350,7 @@ infer[i].oninput=update;
 });
 }
 
-// READ
+// ---------- READ ----------
 function read(file){
 return new Promise(res=>{
 let r=new FileReader();
