@@ -115,21 +115,31 @@ show(`
 }
 
 // ---------- LINKS ----------
+
 function links(){
 show(`
 <div class="page white">
 <h1>PICK LINKS</h1>
 
-<button class="btn" onclick="openLink('https://rodeo-dub-amazon.com)">RODEO</button>
-<button class="btn" onclick="openLink('https://amazon.com')">Example Link 2</button>
+<button class="btn" onclick="openLink('https://fclm-portal.amazon.com')">FCLM PORTAL</button>
+<button class="btn" onclick="openLink('https://aftlite.amazon.com')">AFTLITE</button>
+<button class="btn" onclick="openLink('https://rodeo.amazon.com')">RODEO</button>
+<button class="btn" onclick="openLink('https://inside.amazon.com')">INSIDE AMAZON</button>
+<button class="btn" onclick="openLink('https://quip-amazon.com')">QUIP</button>
+<button class="btn" onclick="openLink('https://w.amazon.com')">WIKI AMAZON</button>
+<button class="btn" onclick="openLink('https://na.amazon.com')">NETWORK ACCESS</button>
+<button class="btn" onclick="openLink('https://hr.amazon.com')">HR PORTAL</button>
+<button class="btn" onclick="openLink('https://atoz.amazon.work')">A TO Z</button>
+<button class="btn" onclick="openLink('https://amazon.com')">AMAZON</button>
+<button class="btn" onclick="openLink('https://google.com')">GOOGLE</button>
 
 <button class="btn" onclick="pickTools()">⬅ BACK</button>
 </div>
 `);
-}
-function openLink(url){window.open(url,"_blank");}
 
-// ---------- TRACKER UI ----------
+}
+
+TRACKER UI ----------
 function trackerUI(type){
 show(`
 <div class="page white">
@@ -261,7 +271,7 @@ calcUIT();
 // ---------- UIT ----------
 function uitTable(){
 let cols=mode==="hours"
-?Array.from({length:10},(_,i)=>"Hour"+(i+1))
+?Array.from({length:10},(_,i)=>"H"+(i+1))
 :["Q1","Q2","Q3"];
 
 return `<h2>UIT</h2><table class="uit">
