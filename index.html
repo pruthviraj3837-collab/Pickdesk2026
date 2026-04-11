@@ -32,7 +32,6 @@ cursor:pointer;
 font-size:15px;
 box-shadow:0 3px 8px rgba(0,0,0,0.3);
 }
-.btn:hover{transform:scale(1.05);}
 
 table{
 border-collapse:collapse;
@@ -57,26 +56,32 @@ text-align:center;
 
 tr:nth-child(even){background:#f2f2f2;}
 
-.grand{
-background:#d6eaf8;
-font-weight:bold;
-}
+.grand{background:#d6eaf8;font-weight:bold;}
 
 td[contenteditable]{background:#fff8dc;}
-
-input{margin:5px;padding:5px;}
-h1,h2{margin:10px;}
 </style>
 </head>
 
 <body>
-
 <div id="app"></div>
 
 <script>
 let app=document.getElementById("app");
 
-function show(html){app.innerHTML=html;}
+// ---------- DATA ----------
+let data=[],mode="quarters";
+
+let remarksList=[
+"Low Rate","Idle Time","Quality Issue","Late Start","Early Logout",
+"Break Extension","System Issue","Training Required","Process Gap",
+"Fatigue","Behavior Issue","Unplanned Leave","Rebin Delay",
+"Scanning Issue","Other"
+];
+
+let coachingList=["Yes","No","Pending"];
+
+// ---------- NAV ----------
+function show(x){app.innerHTML=x;}
 
 // ---------- HOME ----------
 function home(){
@@ -85,123 +90,41 @@ show(`
 <img src="https://raw.githubusercontent.com/pruthviraj3837-collab/Pickdesk2026/main/Gemini_Generated_Image_v28qxev28qxev28q%20(1).png"
 style="position:absolute;width:100%;height:100%;object-fit:cover;">
 <button class="btn" style="position:absolute;bottom:30px;" onclick="tools()">NEXT →</button>
-</div>
-`);
+</div>`);
 }
 
 // ---------- TOOLS ----------
 function tools(){
-show(`
-<div class="page black">
-<h1>TOOLS</h1>
-<button class="btn" onclick="pickTools()">PICK TOOLS</button>
-<button class="btn" onclick="packTools()">PACK TOOLS</button>
-</div>
-`);
-}
-
-// ---------- PICK ----------
-function pickTools(){
-show(`
-<div class="page black">
-<h1>PICK TOOLS</h1>
-<button class="btn" onclick="pickTracker()">PICK UIT TRACKER</button>
-<button class="btn" onclick="links()">PICK LINKS</button>
-<button class="btn" onclick="under()">TAMPERMONKEY</button>
-<button class="btn" onclick="under()">IO ADDRESS</button>
-<button class="btn" onclick="tools()">⬅ BACK</button>
-</div>
-`);
-}
-
-// ---------- PACK ----------
-function packTools(){
-show(`
-<div class="page black">
-<h1>PACK TOOLS</h1>
-<button class="btn" onclick="packTracker()">PACK UIT TRACKER</button>
-<button class="btn" onclick="tools()">⬅ BACK</button>
-</div>
-`);
-}
-
-// ---------- UNDER ----------
-function under(){
 show(`<div class="page black">
-<h1>Will be added soon</h1>
-<button class="btn" onclick="tools()">⬅ BACK</button>
-</div>`);
-}
-
-// ---------- LINKS ----------
-function openLink(url){window.open(url,'_blank');}
-
-function links(){
-let linksData=[
-{name:"FCLM",url:"https://fclm-portal.amazon.com"},
-{name:"AFTLITE",url:"https://aftlite.amazon.com"},
-{name:"RODEO",url:"https://rodeo.amazon.com"},
-{name:"INSIDE",url:"https://inside.amazon.com"},
-{name:"QUIP",url:"https://quip-amazon.com"},
-{name:"WIKI",url:"https://w.amazon.com"},
-{name:"A TO Z",url:"https://atoz.amazon.work"},
-{name:"KIBANA",url:"https://kibana.amazon.com"},
-{name:"SCP",url:"https://scp.amazon.com"},
-{name:"IT SUPPORT",url:"https://it.amazon.com"},
-{name:"PAYROLL",url:"https://payroll.amazon.com"},
-{name:"MYTIME",url:"https://mytime.amazon.com"},
-{name:"LEARNING",url:"https://learning.amazon.com"},
-{name:"VPN",url:"https://vpn.amazon.com"},
-{name:"SLACK",url:"https://slack.com"},
-{name:"CHIME",url:"https://app.chime.aws"},
-{name:"OUTLOOK",url:"https://outlook.office.com"},
-{name:"SHAREPOINT",url:"https://sharepoint.com"},
-{name:"ONEDRIVE",url:"https://onedrive.live.com"},
-{name:"GITHUB",url:"https://github.com"},
-{name:"GOOGLE",url:"https://google.com"},
-{name:"YOUTUBE",url:"https://youtube.com"},
-{name:"CHATGPT",url:"https://chat.openai.com"}
-];
-
-let buttons=linksData.map(l=>`<button class="btn" onclick="openLink('${l.url}')">${l.name}</button>`).join("");
-
-show(`<div class="page white">
-<h1>PICK LINKS</h1>
-<div style="width:90%;display:flex;flex-wrap:wrap;justify-content:center;">
-${buttons}
-</div>
-<button class="btn" onclick="pickTools()">⬅ BACK</button>
+<h1>TOOLS</h1>
+<button class="btn" onclick="pickTracker()">PICK TRACKER</button>
+<button class="btn" onclick="packTracker()">PACK TRACKER</button>
 </div>`);
 }
 
 // ---------- TRACKER ----------
-let data=[],mode="quarters";
+function pickTracker(){trackerUI("PICK");}
+function packTracker(){trackerUI("PACK");}
 
 function trackerUI(type){
-show(`
-<div class="page white">
+show(`<div class="page white">
 <h1>${type} UIT TRACKER</h1>
 
 <input type="file" id="f1">
 <input type="file" id="f2"><br>
-<button class="btn" onclick="process()">PROCESS</button>
 
-<div>
-<button class="btn" onclick="mode='hours';render()">HOURS</button>
-<button class="btn" onclick="mode='quarters';render()">QUARTERS</button>
-</div>
+<button class="btn" onclick="process()">PROCESS</button>
+<button class="btn" onclick="downloadExcel()">DOWNLOAD REPORT</button>
 
 <div id="out"></div>
-<button class="btn" onclick="tools()">⬅ BACK</button>
-</div>
-`);
-}
 
-function pickTracker(){trackerUI("PICK");}
-function packTracker(){trackerUI("PACK");}
+<button class="btn" onclick="tools()">⬅ BACK</button>
+</div>`);
+}
 
 // ---------- PROCESS ----------
 async function process(){
+
 let emp=await read(f1.files[0]);
 let lc=await read(f2.files[0]);
 
@@ -210,16 +133,16 @@ function col(o,k){return Object.keys(o).find(c=>c.toLowerCase().includes(k));}
 let map={},lmap={};
 
 lc.forEach(r=>{
-let name=(r[col(r,"name")]||"").toLowerCase();
-map[name]=r[col(r,"login")];
-lmap[name]=(r[col(r,"lc")]||"L1");
+let n=(r[col(r,"name")]||"").toLowerCase();
+map[n]=r[col(r,"login")];
+lmap[n]=r[col(r,"lc")]||"L1";
 });
 
 data=emp.map(r=>{
 let k=(r[col(r,"name")]||"").toLowerCase();
 
 let total=+r[col(r,"total")]||0;
-let qty=+r[col(r,"qty")]||+r[col(r,"quantity")]||+r[col(r,"unit")]||0;
+let qty=+r[col(r,"qty")]||+r[col(r,"quantity")]||0;
 
 return{
 name:r[col(r,"name")],
@@ -229,11 +152,16 @@ process:(r[col(r,"process")]||"PICK").toUpperCase(),
 total:total,
 infer:+r[col(r,"infer")]||0,
 qty:qty,
-uph: total ? (qty/total) : 0
+uph: total?(qty/total):0
 };
 });
 
 render();
+}
+
+// ---------- DROPDOWN ----------
+function dropdown(list){
+return `<select>${list.map(x=>`<option>${x}</option>`).join("")}</select>`;
 }
 
 // ---------- RENDER ----------
@@ -245,7 +173,7 @@ let html="";
 let lcs=["L1","L2","L3","L4","L5"];
 let gt=0,gi=0;
 
-html+=`<h2>LC SPLIT</h2><table>
+html+=`<h2 style="text-align:center;">LC SPLIT</h2><table>
 <tr><th>LC</th><th>Total</th><th>Infer</th><th>UIT%</th></tr>`;
 
 lcs.forEach(l=>{
@@ -272,16 +200,16 @@ html+=`<tr class="grand">
 // PROCESS TABLES
 ["PICK","TRANS","VRET"].forEach(p=>{
 
-let list=data.filter(x=>x.process.includes(p) && x.total>0)
+let list=data.filter(x=>x.process.includes(p)&&x.total>0)
 .sort((a,b)=>(b.infer/b.total)-(a.infer/a.total)).slice(0,15);
 
-if(list.length===0) return;
+if(!list.length)return;
 
 html+=`<h2 style="text-align:center;">${p} TOP DEFAULTERS</h2><table>
 <tr>
 <th>Name</th><th>Login</th><th>LC</th>
 <th>Infer</th><th>Total</th><th>UIT%</th>
-<th>Quantity</th><th>UPH</th>
+<th>Qty</th><th>UPH</th>
 <th>Remarks</th><th>Coaching</th>
 </tr>`;
 
@@ -293,29 +221,33 @@ html+=`<tr>
 <td>${r.infer.toFixed(2)}</td>
 <td>${r.total.toFixed(2)}</td>
 <td>${((r.infer/r.total)*100).toFixed(2)}%</td>
-<td>${r.qty.toFixed(0)}</td>
+<td>${r.qty}</td>
 <td>${r.uph.toFixed(2)}</td>
-<td contenteditable></td>
-<td contenteditable></td>
+<td>${dropdown(remarksList)}</td>
+<td>${dropdown(coachingList)}</td>
 </tr>`;
 });
 
 html+=`</table>`;
+
+// HOURS + QUARTERS
+html+=timeTables(p);
+
 });
 
-html+=uitTable();
-
 out.innerHTML=html;
-calcUIT();
 }
 
-// ---------- UIT ----------
-function uitTable(){
-let cols=mode==="hours"
-?Array.from({length:10},(_,i)=>"H"+(i+1))
-:["Q1","Q2","Q3"];
+// ---------- TIME TABLES ----------
+function timeTables(title){
 
-return `<h2>UIT</h2><table class="uit">
+let h=Array.from({length:10},(_,i)=>"H"+(i+1));
+let q=["Q1","Q2","Q3"];
+
+function build(cols,name){
+return `
+<h3 style="text-align:center;">${title} - ${name}</h3>
+<table>
 <tr><th></th>${cols.map(c=>`<th>${c}</th>`)}<th>Total</th></tr>
 <tr><td>Total</td>${cols.map(()=>`<td contenteditable></td>`)}<td></td></tr>
 <tr><td>Infer</td>${cols.map(()=>`<td contenteditable></td>`)}<td></td></tr>
@@ -323,31 +255,19 @@ return `<h2>UIT</h2><table class="uit">
 </table>`;
 }
 
-// ---------- CALC ----------
-function calcUIT(){
-document.querySelectorAll(".uit").forEach(t=>{
-let total=t.rows[1].cells;
-let infer=t.rows[2].cells;
-let uit=t.rows[3].cells;
-
-function update(){
-let ts=0,is=0;
-for(let i=1;i<total.length-1;i++){
-let a=parseFloat(total[i].innerText)||0;
-let b=parseFloat(infer[i].innerText)||0;
-ts+=a; is+=b;
-uit[i].innerText=a?((b/a)*100).toFixed(2)+"%":"";
-}
-total[total.length-1].innerText=ts.toFixed(2);
-infer[infer.length-1].innerText=is.toFixed(2);
-uit[uit.length-1].innerText=ts?((is/ts)*100).toFixed(2)+"%":"";
+return build(h,"HOURS")+build(q,"QUARTERS");
 }
 
-for(let i=1;i<total.length-1;i++){
-total[i].oninput=update;
-infer[i].oninput=update;
-}
+// ---------- DOWNLOAD ----------
+function downloadExcel(){
+let wb=XLSX.utils.book_new();
+
+document.querySelectorAll("table").forEach((t,i)=>{
+let ws=XLSX.utils.table_to_sheet(t);
+XLSX.utils.book_append_sheet(wb,ws,"Table"+(i+1));
 });
+
+XLSX.writeFile(wb,"UIT_Report.xlsx");
 }
 
 // ---------- READ ----------
