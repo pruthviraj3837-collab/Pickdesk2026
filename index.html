@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -121,57 +121,22 @@ show(`
 <div class="page white">
 <h1>PICK LINKS</h1>
 
-<div id="linksContainer">Loading links...</div>
+<button class="btn" onclick="openLink('https://fclm-portal.amazon.com')">FCLM PORTAL</button>
+<button class="btn" onclick="openLink('https://aftlite.amazon.com')">AFTLITE</button>
+<button class="btn" onclick="openLink('https://rodeo.amazon.com')">RODEO</button>
+<button class="btn" onclick="openLink('https://inside.amazon.com')">INSIDE AMAZON</button>
+<button class="btn" onclick="openLink('https://quip-amazon.com')">QUIP</button>
+<button class="btn" onclick="openLink('https://w.amazon.com')">WIKI AMAZON</button>
+<button class="btn" onclick="openLink('https://na.amazon.com')">NETWORK ACCESS</button>
+<button class="btn" onclick="openLink('https://hr.amazon.com')">HR PORTAL</button>
+<button class="btn" onclick="openLink('https://atoz.amazon.work')">A TO Z</button>
+<button class="btn" onclick="openLink('https://amazon.com')">AMAZON</button>
+<button class="btn" onclick="openLink('https://google.com')">GOOGLE</button>
 
 <button class="btn" onclick="pickTools()">⬅ BACK</button>
 </div>
 `);
 
-/* IMPORTANT: YOUR RAW FILE LINK */
-const fileURL = "https://github.com/pruthviraj3837-collab/Pickdesk2026/blob/807ff74c2b2a137e4ce666801d25a107922eeacf/LINKS.txt";
-
-/* FETCH LINKS */
-fetch(fileURL)
-.then(res => {
-if(!res.ok) throw new Error("Fetch failed");
-return res.text();
-})
-.then(text => {
-
-let lines = text.split("\n").filter(l => l.trim() !== "");
-
-if(lines.length === 0){
-document.getElementById("linksContainer").innerHTML = "No links found in file";
-return;
-}
-
-let html = "";
-
-lines.forEach(line => {
-
-/* SUPPORT BOTH FORMATS */
-let name = "";
-let url = "";
-
-if(line.includes(",")){
-let parts = line.split(",");
-name = parts[0].trim();
-url = parts[1].trim();
-}else{
-url = line.trim();
-name = url;
-}
-
-html += `<button class="btn" onclick="openLink('${url}')">${name}</button>`;
-});
-
-document.getElementById("linksContainer").innerHTML = html;
-
-})
-.catch(err => {
-console.error(err);
-document.getElementById("linksContainer").innerHTML = "❌ Failed to load links (Check GitHub RAW link)";
-});
 }
 
 TRACKER UI ----------
@@ -361,4 +326,3 @@ home();
 
 </body>
 </html>
-
