@@ -7,45 +7,66 @@
 
 <style>
 body{margin:0;font-family:Segoe UI;}
-.page{height:100vh;display:flex;justify-content:center;align-items:center;flex-direction:column;}
+
+/* Pages */
+.page{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+position:relative;
+}
+
 .black{background:#000;color:white;}
 .white{background:#fff;color:black;}
 
+/* Buttons */
 .btn{
 background:#ff9900;
 color:#000;
 font-weight:bold;
 border:none;
-padding:14px 28px;
-margin:10px;
-border-radius:8px;
+padding:12px 26px;
+margin:8px;
+border-radius:10px;
 cursor:pointer;
-font-size:16px;
+font-size:15px;
+box-shadow:0 3px 8px rgba(0,0,0,0.3);
 }
+.btn:hover{transform:scale(1.05);}
 
-h1{margin-bottom:20px;}
-
+/* Tables */
 table{
 border-collapse:collapse;
-margin:15px auto;
-width:90%;
-font-size:13px;
+margin:12px auto;
+width:85%;
+font-size:12px;
 }
+
 th{
 background:#2ecc71;
 color:#000;
 padding:6px;
 }
+
 td{
-border:1px solid #ccc;
+border:1px solid #bbb;
 padding:5px;
 text-align:center;
 }
-tr:nth-child(even){background:#f9f9f9;}
+
+tr:nth-child(even){background:#f2f2f2;}
 .grand{background:#c6efce;font-weight:bold;}
 
-input,select{padding:6px;margin:5px;}
-td[contenteditable]{background:#fff8dc;}
+td[contenteditable]{
+background:#fff8dc;
+}
+
+/* Inputs */
+input{margin:5px;padding:5px;}
+h1,h2{margin:10px;}
+
 </style>
 </head>
 
@@ -56,7 +77,7 @@ td[contenteditable]{background:#fff8dc;}
 <script>
 let app=document.getElementById("app");
 
-// ---------- NAVIGATION ----------
+// ---------- NAV ----------
 function show(html){app.innerHTML=html;}
 
 // ---------- HOME ----------
@@ -64,7 +85,7 @@ function home(){
 show(`
 <div class="page black">
 <img src="https://raw.githubusercontent.com/pruthviraj3837-collab/Pickdesk2026/main/Gemini_Generated_Image_v28qxev28qxev28q%20(1).png"
-style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;">
+style="position:absolute;width:100%;height:100%;object-fit:cover;">
 <button class="btn" style="position:absolute;bottom:30px;" onclick="tools()">NEXT →</button>
 </div>
 `);
@@ -90,6 +111,7 @@ show(`
 <button class="btn" onclick="links()">PICK LINKS</button>
 <button class="btn" onclick="under()">TAMPERMONKEY</button>
 <button class="btn" onclick="under()">IO ADDRESS</button>
+<button class="btn" onclick="tools()">⬅ BACK</button>
 </div>
 `);
 }
@@ -100,6 +122,7 @@ show(`
 <div class="page black">
 <h1>PACK TOOLS</h1>
 <button class="btn" onclick="packTracker()">PACK UIT TRACKER</button>
+<button class="btn" onclick="tools()">⬅ BACK</button>
 </div>
 `);
 }
@@ -115,31 +138,32 @@ show(`
 }
 
 // ---------- LINKS ----------
+function openLink(url){
+window.open(url,'_blank');
+}
 
 function links(){
 show(`
 <div class="page white">
 <h1>PICK LINKS</h1>
 
-<button class="btn" onclick="openLink('https://fclm-portal.amazon.com')">FCLM PORTAL</button>
+<button class="btn" onclick="openLink('https://fclm-portal.amazon.com')">FCLM</button>
 <button class="btn" onclick="openLink('https://aftlite.amazon.com')">AFTLITE</button>
 <button class="btn" onclick="openLink('https://rodeo.amazon.com')">RODEO</button>
-<button class="btn" onclick="openLink('https://inside.amazon.com')">INSIDE AMAZON</button>
+<button class="btn" onclick="openLink('https://inside.amazon.com')">INSIDE</button>
 <button class="btn" onclick="openLink('https://quip-amazon.com')">QUIP</button>
-<button class="btn" onclick="openLink('https://w.amazon.com')">WIKI AMAZON</button>
-<button class="btn" onclick="openLink('https://na.amazon.com')">NETWORK ACCESS</button>
-<button class="btn" onclick="openLink('https://hr.amazon.com')">HR PORTAL</button>
+<button class="btn" onclick="openLink('https://w.amazon.com')">WIKI</button>
+<button class="btn" onclick="openLink('https://na.amazon.com')">NETWORK</button>
+<button class="btn" onclick="openLink('https://hr.amazon.com')">HR</button>
 <button class="btn" onclick="openLink('https://atoz.amazon.work')">A TO Z</button>
-<button class="btn" onclick="openLink('https://amazon.com')">AMAZON</button>
 <button class="btn" onclick="openLink('https://google.com')">GOOGLE</button>
 
 <button class="btn" onclick="pickTools()">⬅ BACK</button>
 </div>
 `);
-
 }
 
-TRACKER UI ----------
+// ---------- TRACKER UI ----------
 function trackerUI(type){
 show(`
 <div class="page white">
@@ -173,20 +197,13 @@ let emp=await read(f1.files[0]);
 let lc=await read(f2.files[0]);
 
 function col(o,k){return Object.keys(o).find(c=>c.toLowerCase().includes(k));}
-function lcFix(v){
-v=(v||"")+"";
-if(v.includes("1"))return "L1";
-if(v.includes("2"))return "L2";
-if(v.includes("3"))return "L3";
-if(v.includes("4"))return "L4";
-if(v.includes("5"))return "L5";
-return "L1";
-}
 
 let map={},lmap={};
+
 lc.forEach(r=>{
-map[(r[col(r,"name")]||"").toLowerCase()]=r[col(r,"login")];
-lmap[(r[col(r,"name")]||"").toLowerCase()]=lcFix(r[col(r,"lc")]);
+let name=(r[col(r,"name")]||"").toLowerCase();
+map[name]=r[col(r,"login")];
+lmap[name]=(r[col(r,"lc")]||"L1");
 });
 
 data=emp.map(r=>{
@@ -206,7 +223,6 @@ render();
 // ---------- RENDER ----------
 function render(){
 
-// LC TABLE
 let lcs=["L1","L2","L3","L4","L5"];
 let html=`<h2>LC SPLIT</h2><table>
 <tr><th>LC</th><th>Total</th><th>Infer</th><th>UIT%</th></tr>`;
@@ -239,7 +255,7 @@ html+=`<tr class="grand">
 let top=[...data].filter(x=>x.total>0)
 .sort((a,b)=>(b.infer/b.total)-(a.infer/a.total)).slice(0,20);
 
-html+=`<h2>TOP DEFAULTERS</h2><table>
+html+=`<h2 style="text-align:center;">TOP DEFAULTERS</h2><table>
 <tr>
 <th>Name</th><th>Login</th><th>LC</th>
 <th>Infer</th><th>Total</th><th>UIT%</th>
@@ -261,7 +277,6 @@ html+=`<tr>
 
 html+=`</table>`;
 
-// UIT TABLE
 html+=uitTable();
 
 out.innerHTML=html;
@@ -296,8 +311,8 @@ let b=parseFloat(infer[i].innerText)||0;
 ts+=a; is+=b;
 uit[i].innerText=a?((b/a)*100).toFixed(2)+"%":"";
 }
-total[total.length-1].innerText=ts;
-infer[infer.length-1].innerText=is;
+total[total.length-1].innerText=ts.toFixed(2);
+infer[infer.length-1].innerText=is.toFixed(2);
 uit[uit.length-1].innerText=ts?((is/ts)*100).toFixed(2)+"%":"";
 }
 
@@ -326,4 +341,3 @@ home();
 
 </body>
 </html>
-
