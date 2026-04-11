@@ -7,18 +7,18 @@
 
 <style>
 body{margin:0;font-family:Segoe UI;}
-
-.page{height:100vh;display:flex;justify-content:center;align-items:center;flex-direction:column;}
+.page{height:100vh;display:flex;justify-content:center;align-items:center;flex-direction:column;position:relative;}
 .black{background:#000;color:#fff;}
 .white{background:#fff;color:#000;}
 
 .btn{
 background:#ff9900;
+color:#000;
 font-weight:bold;
 border:none;
-padding:10px 20px;
-margin:6px;
-border-radius:8px;
+padding:12px 24px;
+margin:8px;
+border-radius:10px;
 cursor:pointer;
 }
 
@@ -38,12 +38,11 @@ td[contenteditable]{background:#fff8dc;}
 let app=document.getElementById("app");
 let data=[],mode="hours";
 
-// ---------- REMARKS ----------
+// 🔴 REPLACE WITH YOUR REAL 15 REMARKS
 let remarksList=[
-"Low Rate","Idle Time","Quality Issue","Late Start","Early Logout",
-"Break Extension","System Issue","Training Required","Process Gap",
-"Fatigue","Behavior Issue","Unplanned Leave","Rebin Delay",
-"Scanning Issue","Other"
+"PACK TO PICK","PICK TO TRANS","TRANS TO VRET","REMARK 4","REMARK 5",
+"REMARK 6","REMARK 7","REMARK 8","REMARK 9","REMARK 10",
+"REMARK 11","REMARK 12","REMARK 13","REMARK 14","REMARK 15"
 ];
 
 let coachingList=["Yes","No","Pending"];
@@ -52,14 +51,15 @@ function dropdown(list){
 return `<select>${list.map(x=>`<option>${x}</option>`).join("")}</select>`;
 }
 
-// ---------- NAV ----------
 function show(x){app.innerHTML=x;}
 
 // ---------- HOME ----------
 function home(){
-show(`<div class="page black">
-<h1>OUTBOUND TOOLS</h1>
-<button class="btn" onclick="tools()">NEXT</button>
+show(`
+<div class="page black">
+<img src="https://raw.githubusercontent.com/pruthviraj3837-collab/Pickdesk2026/main/Gemini_Generated_Image_v28qxev28qxev28q%20(1).png"
+style="position:absolute;width:100%;height:100%;object-fit:cover;">
+<button class="btn" style="position:absolute;bottom:30px;" onclick="tools()">NEXT →</button>
 </div>`);
 }
 
@@ -67,14 +67,41 @@ show(`<div class="page black">
 function tools(){
 show(`<div class="page black">
 <h1>TOOLS</h1>
-<button class="btn" onclick="tracker()">TRACKER</button>
-<button class="btn" onclick="links()">LINKS</button>
+<button class="btn" onclick="pickTools()">PICK TOOLS</button>
+<button class="btn" onclick="packTools()">PACK TOOLS</button>
+</div>`);
+}
+
+// ---------- PICK ----------
+function pickTools(){
+show(`<div class="page black">
+<h1>PICK TOOLS</h1>
+<button class="btn" onclick="tracker()">PICK UIT TRACKER</button>
+<button class="btn" onclick="links()">PICK LINKS</button>
+<button class="btn" onclick="under()">TAMPERMONKEY</button>
+<button class="btn" onclick="under()">IO ADDRESS</button>
+<button class="btn" onclick="tools()">BACK</button>
+</div>`);
+}
+
+// ---------- PACK ----------
+function packTools(){
+show(`<div class="page black">
+<h1>PACK TOOLS</h1>
+<button class="btn" onclick="tracker()">PACK UIT TRACKER</button>
+<button class="btn" onclick="tools()">BACK</button>
+</div>`);
+}
+
+// ---------- UNDER ----------
+function under(){
+show(`<div class="page black">
+<h1>Will be added soon</h1>
+<button class="btn" onclick="tools()">BACK</button>
 </div>`);
 }
 
 // ---------- LINKS ----------
-function openLink(u){window.open(u,'_blank');}
-
 function links(){
 
 let linksData=[
@@ -86,20 +113,27 @@ let linksData=[
 {name:"WIKI",url:"https://w.amazon.com"},
 {name:"A TO Z",url:"https://atoz.amazon.work"},
 {name:"KIBANA",url:"https://kibana.amazon.com"},
+{name:"SCP",url:"https://scp.amazon.com"},
+{name:"IT",url:"https://it.amazon.com"},
+{name:"PAYROLL",url:"https://payroll.amazon.com"},
+{name:"VPN",url:"https://vpn.amazon.com"},
 {name:"SLACK",url:"https://slack.com"},
 {name:"OUTLOOK",url:"https://outlook.office.com"},
+{name:"SHAREPOINT",url:"https://sharepoint.com"},
+{name:"ONEDRIVE",url:"https://onedrive.live.com"},
+{name:"GITHUB",url:"https://github.com"},
 {name:"GOOGLE",url:"https://google.com"},
 {name:"YOUTUBE",url:"https://youtube.com"},
-{name:"GITHUB",url:"https://github.com"},
 {name:"CHATGPT",url:"https://chat.openai.com"}
 ];
 
-let btns=linksData.map(l=>`<button class="btn" onclick="openLink('${l.url}')">${l.name}</button>`).join("");
+let btns=linksData.map(l=>`
+<button class="btn" onclick="window.open('${l.url}','_blank')">${l.name}</button>`).join("");
 
 show(`<div class="page white">
-<h1>LINKS</h1>
+<h1>PICK LINKS</h1>
 ${btns}
-<button class="btn" onclick="tools()">BACK</button>
+<button class="btn" onclick="pickTools()">BACK</button>
 </div>`);
 }
 
@@ -165,9 +199,9 @@ let html="";
 let d=data.filter(x=>x.process.includes(p));
 if(!d.length)return;
 
-// LC SPLIT WITH COUNT
+// LC SPLIT
 html+=`<h2>${p} LC SPLIT</h2><table>
-<tr><th>LC</th><th>Employees</th><th>Total</th><th>Infer</th><th>UIT%</th></tr>`;
+<tr><th>LC</th><th>Emp</th><th>Total</th><th>Infer</th><th>UIT%</th></tr>`;
 
 ["L1","L2","L3","L4","L5"].forEach(l=>{
 let f=d.filter(x=>x.lc===l);
@@ -186,7 +220,7 @@ html+=`<tr>
 html+=`</table>`;
 
 // TOP
-let top=[...d].slice(0,10);
+let top=[...d].sort((a,b)=>(b.infer/b.total)-(a.infer/a.total)).slice(0,15);
 
 html+=`<h2>${p} TOP DEFAULTERS</h2><table>
 <tr>
@@ -213,10 +247,12 @@ html+=`<tr>
 
 html+=`</table>`;
 
-// BUTTONS BACK
+// BUTTONS
 html+=`
+<div style="text-align:center;">
 <button class="btn" onclick="mode='hours';render()">HOURS</button>
 <button class="btn" onclick="mode='quarters';render()">QUARTERS</button>
+</div>
 `;
 
 html+=timeTable(p);
@@ -228,7 +264,6 @@ out.innerHTML=html;
 
 // ---------- TIME TABLE ----------
 function timeTable(title){
-
 let cols = mode==="hours"
 ?Array.from({length:10},(_,i)=>"H"+(i+1))
 :["Q1","Q2","Q3"];
@@ -257,6 +292,5 @@ r.readAsArrayBuffer(file);
 // START
 home();
 </script>
-
 </body>
 </html>
