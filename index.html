@@ -1,15 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PICK LC UIT TRACKER</title>
+    <meta charset="UTF-8">
+    <title>PICK LC UIT TRACKER</title>
+
+    <!-- XLSX Library (keep this if your script uses it) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 
 <body>
 
-<!-- Your script starts here -->
+<!-- Your script will create UI automatically -->
+
 <script>
+
+  
+
 
 (function () {
 'use strict';
@@ -81,8 +87,6 @@ font-weight:bold;border-radius:6px;cursor:pointer;
 .grandRow{background:#cfe2ff !important;font-weight:900;}
 `;
 document.head.appendChild(st);
-
-// (KEEP YOUR FULL ORIGINAL JS BELOW — NO CHANGES)
 
 // HELPERS
 function readExcel(file){
@@ -158,11 +162,174 @@ alert("Error: "+e.message);
 }
 };
 
-// (rest of your script remains SAME — no need to modify)
+// MERGE (FIXED)
+document.getElementById("mergeBtn").onclick=()=>{
+if(!mergedData.length) return alert("Process first");
+let ws=XLSX.utils.json_to_sheet(mergedData);
+let wb=XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb,ws,"Merged");
+XLSX.writeFile(wb,"Merged.xlsx");
+};
 
+// DOWNLOAD (FIXED SAFE)
+document.getElementById("tableBtn").onclick=()=>{
+if(!mergedData.length) return alert("Process first");
+
+let data=[];
+
+data.push(["LC SPLIT"]);
+lcSummary.forEach(r=>data.push(Object.values(r)));
+
+data.push([]);
+data.push(["TOP DEFAULTERS"]);
+topData.forEach(r=>{
+data.push([r.name,r.login,r.lc,f(r.total),f(r.inferred)]);
+});
+
+let ws=XLSX.utils.aoa_to_sheet(data);
+let wb=XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb,ws,"REPORT");
+XLSX.writeFile(wb,"REPORT.xlsx");
+};
+
+// LC
+function calcLC(){
+let m={},gt=0,gi=0,gc=0;
+
+mergedData.forEach(r=>{
+if(!m[r.lc]) m[r.lc]={t:0,i:0,c:0};
+m[r.lc].t+=r.total;
+m[r.lc].i+=r.inferred;
+m[r.lc].c++;
+gt+=r.total; gi+=r.inferred; gc++;
+});
+
+lcSummary=Object.keys(m).map(k=>{
+let x=m[k];
+return {LC:k,Total:f(x.t),Inferred:f(x.i),UIT:f((x.i/x.t)*100||0)+"%",Employees:x.c};
+});
+
+lcSummary.push({LC:"GRAND TOTAL",Total:f(gt),Inferred:f(gi),UIT:f((gi/gt)*100||0)+"%",Employees:gc});
 }
-})();
 
+// TOP
+function calcTop(){
+topData=mergedData.map(r=>({...r,uit:r.total?(r.inferred/r.total)*100:0}))
+.sort((a,b)=>b.uit-a.uit).slice(0,20);
+}
+
+// RENDER (SAFE)
+function render(){
+
+let html=`<h3>LC SPLIT</h3><table>
+<tr><th>LC</th><th>Total</th><th>Inferred</th><th>UIT%</th><th>Pickers</th></tr>`;
+
+lcSummary.forEach(r=>{
+let cls=r.LC==="GRAND TOTAL"?"class='grandRow'":"";
+html+=`<tr ${cls}><td>${r.LC}</td><td>${r.Total}</td><td>${r.Inferred}</td><td>${r.UIT}</td><td>${r.Employees}</td></tr>`;
+});
+
+html+=`</table>`;
+
+html+=`<h3>TOP UIT DEFAULTERS</h3><table>
+<tr>
+<th>Name</th><th>Login</th><th>LC</th>
+<th>Total</th><th>Inferred</th><th>UIT%</th>
+<th>UPH</th><th>Qty</th>
+<th>Remarks</th><th>Coaching</th>
+</tr>`;
+
+topData.forEach(r=>{
+html+=`<tr>
+<td>${r.name}</td>
+<td>${r.login}</td>
+<td>${r.lc}</td>
+<td>${f(r.total)}</td>
+<td>${f(r.inferred)}</td>
+<td>${f(r.uit)}%</td>
+<td>${f(r.uph)}</td>
+<td>${r.quantity}</td>
+
+<td class="remarkCell">
+<select onchange="this.title=this.value">
+<option></option>
+${remarksList.map(x=>`<option>${x}</option>`).join("")}
+</select>
+</td>
+
+<td>
+<select>
+<option></option>
+<option>Coaching done</option>
+<option>GCA punched</option>
+</select>
+</td>
+</tr>`;
+});
+
+html+=`</table>`;
+
+// MODE BUTTONS FIX
+html+=`
+<div style="text-align:center;">
+<button class="modeBtn" id="qBtn">Quarters</button>
+<button class="modeBtn" id="hBtn">Hours</button>
+</div>
+`;
+
+html+=createUIT("PICK UIT")+createUIT("TRANS UIT")+createUIT("V-RET UIT");
+
+document.getElementById("out").innerHTML=html;
+
+// SAFE REBIND
+document.getElementById("qBtn").onclick=()=>{mode="quarters";render();}
+document.getElementById("hBtn").onclick=()=>{mode="hours";render();}
+
+setTimeout(attachCalc,100);
+}
+
+// UIT
+function createUIT(title){
+let headers=mode==="hours"
+?Array.from({length:10},(_,i)=>"Hour "+(i+1))
+:["Q1","Q2","Q3"];
+
+return `
+<h3>${title}</h3>
+<table class="uitTable">
+<tr><th>UITs</th>${headers.map(h=>`<th>${h}</th>`).join("")}<th>Total</th></tr>
+<tr><td>Total</td>${headers.map(()=>`<td contenteditable></td>`).join("")}<td></td></tr>
+<tr><td>Inferred</td>${headers.map(()=>`<td contenteditable></td>`).join("")}<td></td></tr>
+<tr><td>UIT%</td>${headers.map(()=>`<td></td>`).join("")}<td></td></tr>
+</table>`;
+}
+
+// CALC
+function attachCalc(){
+document.querySelectorAll(".uitTable").forEach(t=>{
+let total=t.rows[1].cells;
+let infer=t.rows[2].cells;
+let uit=t.rows[3].cells;
+
+for(let i=1;i<total.length-1;i++){
+total[i].oninput=infer[i].oninput=()=>{
+let ts=0,is=0;
+for(let j=1;j<total.length-1;j++){
+let a=parseFloat(total[j].innerText)||0;
+let b=parseFloat(infer[j].innerText)||0;
+ts+=a; is+=b;
+uit[j].innerText=a?f((b/a)*100)+"%":"";
+}
+total[total.length-1].innerText=f(ts);
+infer[infer.length-1].innerText=f(is);
+uit[uit.length-1].innerText=ts?f((is/ts)*100)+"%":"";
+};
+}
+});
+}
+
+                   }
+  
 </script>
 
 </body>
