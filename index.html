@@ -213,7 +213,7 @@ topData=mergedData.map(r=>({...r,uit:r.total?(r.inferred/r.total)*100:0}))
 function render(){
 
 let html=`<h3>LC SPLIT</h3><table>
-<tr><th>LC</th><th>Total</th><th>Inferred</th><th>UIT%</th><th>Pickers</th></tr>`;
+<tr><th>LC</th><th>Total</th><th>Inferred</th><th>UIT%</th><th>AAs</th></tr>`;
 
 lcSummary.forEach(r=>{
 let cls=r.LC==="GRAND TOTAL"?"class='grandRow'":"";
