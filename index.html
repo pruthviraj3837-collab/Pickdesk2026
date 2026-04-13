@@ -174,7 +174,7 @@ lcSummary.forEach(r=>data.push(Object.values(r)));
 data.push([]);
 data.push(["TOP DEFAULTERS"]);
 topData.forEach(r=>{
-data.push([r.name,r.login,r.lc,f(r.total),f(r.inferred),f(r.uit%),r.uph,r.qty,r.remarks,r.coachingstatus]);
+data.push([r.name,r.login,r.lc,f(r.total),f(r.inferred)]);
 });
 
 let ws=XLSX.utils.aoa_to_sheet(data);
